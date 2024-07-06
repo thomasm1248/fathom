@@ -529,5 +529,5 @@ function getArrowAt(point: Vector): {arrow: Arrow | null, t: number | null} {
     let {collision, t} = arrows[i].checkForCollisionWithPoint(point);
     if(collision) return {arrow: arrows[i], t: t};
   }
-  return null;
+  return {arrow: null, t: null};
 }
