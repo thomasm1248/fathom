@@ -89,7 +89,7 @@ window.addEventListener("keydown", function(e: KeyboardEvent) {
       arrowThatNeedsToBeDeleted.prepareForDeletion();
       removeFromArray(arrowThatNeedsToBeDeleted, arrows);
       redrawCanvas();
-    } else if(true) { // TODO: check if it's a character
+    } else if(true) {
       if(_arrowThatIsBeingInteractedWith.onKeyPressed(e)) redrawCanvas();
     }
   }
