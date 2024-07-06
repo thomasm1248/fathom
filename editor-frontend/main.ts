@@ -128,10 +128,18 @@ function onMouseDown(e: MouseEvent | TouchEvent) {
     switchToStateWaiting();
   }
   else if(_state === "interacting with arrow") {
-    // User has clicked away from the arrow
-    switchToStateWaiting();
+    // Check if user clicked on an arrow
+    let {arrow, t} = getArrowAt(mouse);
+    if(arrow != null) {
+      // Drag that arrow
+      switchToStateDraggingArrow(arrow, t);
+    } else {
+      // User has clicked away from the current arrow
+      switchToStateWaiting();
+    }
   }
   else if(_state === "waiting") {
+    // Check if user clicked on an arrow
     let {arrow, t} = getArrowAt(mouse);
     if(arrow != null) {
       switchToStateDraggingArrow(arrow, t);
