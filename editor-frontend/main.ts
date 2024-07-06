@@ -6,7 +6,7 @@
 // ### #   # ###   #
 
 // Initialize environment
-let divStack = document.getElementById("stack"); // TODO: allow clicking on another node while interacting with one node
+let divStack = document.getElementById("stack");
 let surface = document.createElement("div"); // TODO: alter canvas drawing order
 surface.classList.add("surface");
 divStack.appendChild(surface);
@@ -124,8 +124,15 @@ function onMouseDown(e: MouseEvent | TouchEvent) {
   }
 
   if(_state === "interacting") {
-    // The user clicked away from the node being interacted with
-    switchToStateWaiting();
+    // Check if user clicked on an arrow
+    let {arrow, t} = getArrowAt(mouse);
+    if(arrow != null) {
+      // Drag that arrow
+      switchToStateDraggingArrow(arrow, t);
+    } else {
+      // The user clicked away from the node being interacted with
+      switchToStateWaiting();
+    }
   }
   else if(_state === "interacting with arrow") {
     // Check if user clicked on an arrow
@@ -258,6 +265,9 @@ function mouseEventFromNode(node: GraphNode, e: MouseEvent | TouchEvent) {
   if(e.type === "contextmenu") e.preventDefault();
 
   if(_state === "interacting") {
+    if((e.type === "touchstart" || e.type === "mousedown") && node != _nodeThatIsBeingInteractedWith) {
+      switchToStateDragging(node, e.shiftKey);
+    }
   }
   else if(_state === "waiting") {
     if(e.type === "touchstart" || e.type === "mousedown") {
