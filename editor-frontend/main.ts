@@ -226,7 +226,7 @@ function onMouseUp(e: MouseEvent | TouchEvent) {
     }
   }
   else if(_state === "new arrow") {
-    if(_nodeThatArrowMightConnectTo != null) {
+    if(_nodeThatArrowMightConnectTo != null && _nodeThatArrowMightConnectTo != _arrowThatIsBeingCreated.sourceNode) {
       // Connect arrow to the node
       _arrowThatIsBeingCreated.setTargetNode(_nodeThatArrowMightConnectTo);
       // Start interaction with the arrow
