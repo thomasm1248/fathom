@@ -495,6 +495,11 @@ function vDistance(a: Vector, b: Vector) {
   const diffY = a.y - b.y;
   return Math.sqrt(diffX * diffX + diffY * diffY);
 }
+function vDistanceSquared(a: Vector, b: Vector) {
+  const diffX = a.x - b.x;
+  const diffY = a.y - b.y;
+  return diffX * diffX + diffY * diffY;
+}
 interface Vector {
   x: number,
   y: number,

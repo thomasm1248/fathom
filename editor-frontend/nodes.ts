@@ -39,7 +39,7 @@ abstract class GraphNode {
   }
   abstract startInteraction(): void;
   abstract stopInteraction(): void;
-  abstract whereIsArrowEndpoint(arrowControlPoint: Vector): Vector;
+  abstract collidesWithPoint(point: Vector): boolean;
   dragByAmount(change: Vector) {
     this.position.x += change.x;
     this.position.y += change.y;
@@ -119,16 +119,11 @@ class TextNode extends GraphNode { // TODO: when resizing, adjust positions of a
     this.container.style.width = (desiredWidth > this.MIN_WIDTH ? desiredWidth : this.MIN_WIDTH) + "px";
     this.container.style.padding = "10px";
   }
-  whereIsArrowEndpoint(arrowControlPoint: Vector): Vector {
-    // Calculate where a line from the control point to the center intersects the box
-    let fromCenterToControl = vSubtract(arrowControlPoint, this.center());
-    let xyRatio = Math.abs(fromCenterToControl.x) / Math.abs(fromCenterToControl.y);
-    let matchDimension: "width" | "height" = xyRatio > this.container.offsetWidth / this.container.offsetHeight ? "width" : "height";
-    switch(matchDimension) {
-      case "width":
-        return vAdd(this.center(), vScale(fromCenterToControl, (this.container.offsetWidth / 2 + 3) / Math.abs(fromCenterToControl.x)));
-      case "height":
-        return vAdd(this.center(), vScale(fromCenterToControl, (this.container.offsetHeight / 2 + 3) / Math.abs(fromCenterToControl.y)));
-    }
+  collidesWithPoint(point: Vector): boolean {
+    if(point.x < this.position.x) return false;
+    if(point.x > this.position.x + this.container.offsetWidth) return false;
+    if(point.y < this.position.y) return false;
+    if(point.y > this.position.y + this.container.offsetHeight) return false;
+    return true;
   }
 }
