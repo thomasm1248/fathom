@@ -50,9 +50,8 @@ let mouse = {x: 0, y: 0};
 let prevMouse = {x: 0, y: 0};
 
 // Allow the user to pan the view, but don't let them pan too far
-let _pan = {x: 0, y: 0};
-let _topLeftOfView = {x: 0, y: 0};
-let _bottomRightOfView = {x: 0, y: 0};
+let _topLeftBounderyMarker = {x: canvas.width / 2, y: canvas.height / 2};
+let _bottomRightBounderyMarker = {x: canvas.width / 2, y: canvas.height / 2};
 
 redrawCanvas();
 
@@ -189,6 +188,8 @@ function onMouseMove(e: MouseEvent | TouchEvent) {
     }
     // Redraw the canvas so that arrows move as well
     redrawCanvas();
+    // Recalculate where the bounds of the canvas are
+    recalculateCanvasBounderies();
   }
   else if(_state === "waiting") {
   }
@@ -486,6 +487,16 @@ function redrawCanvas() {
   // Draw background
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  /* Draw boundery area
+  ctx.save();
+  ctx.shadowColor = "lightgray";
+  ctx.shadowBlur = 30;
+  ctx.shadowOffsetX = 10;
+  ctx.shadowOffsetY = 10;
+  const dimensions = vSubtract(_bottomRightBounderyMarker, _topLeftBounderyMarker);
+  ctx.fillRect(_topLeftBounderyMarker.x, _topLeftBounderyMarker.y, dimensions.x, dimensions.y);
+  ctx.restore();
+  //*/
   // Draw arrow handle
   if(_nodeThatHasArrowHandle != null) {
     ctx.beginPath();
@@ -514,6 +525,12 @@ function vDistanceSquared(a: Vector, b: Vector) {
   const diffX = a.x - b.x;
   const diffY = a.y - b.y;
   return diffX * diffX + diffY * diffY;
+}
+function vCopy(v: Vector) {
+  return {
+    x: v.x,
+    y: v.y
+  };
 }
 interface Vector {
   x: number,
@@ -552,7 +569,13 @@ function getArrowAt(point: Vector): {arrow: Arrow | null, t: number | null} {
 }
 function dragCanvas(change: Vector) {
   // Prevent user from scrolling too far away
-  // TODO
+  if(_topLeftBounderyMarker.x > canvas.width/2 && change.x > 0) change.x = 0;
+  if(_bottomRightBounderyMarker.x < canvas.width/2 && change.x < 0) change.x = 0;
+  if(_topLeftBounderyMarker.y > canvas.height/2 && change.y > 0) change.y = 0;
+  if(_bottomRightBounderyMarker.y < canvas.height/2 && change.y < 0) change.y = 0;
+  // Move boundery
+  _topLeftBounderyMarker = vAdd(_topLeftBounderyMarker, change);
+  _bottomRightBounderyMarker = vAdd(_bottomRightBounderyMarker, change);
   // Update positions of all objects
   for(var i = 0; i < nodes.length; i++) {
     // TODO: don't drag the node being dragged if _state === "dragging"
@@ -560,4 +583,26 @@ function dragCanvas(change: Vector) {
   }
   // Update canvas
   redrawCanvas();
+}
+function recalculateCanvasBounderies() {
+  // TODO: make sure to recalculate bounderies whenever a new node is created
+  if(nodes.length > 0) {
+    // Set both to the center of a random node
+    const center = nodes[0].center();
+    _topLeftBounderyMarker = vCopy(center);
+    _bottomRightBounderyMarker = vCopy(center);
+  } else {
+    // Reset to default and hope that it's not outside where it's supposed to be
+    _topLeftBounderyMarker = {x: canvas.width / 2, y: canvas.height / 2};
+    _bottomRightBounderyMarker = {x: canvas.width / 2, y: canvas.height / 2};
+  }
+  // Stretch bounderies to fit all nodes
+  for(let i = 0; i < nodes.length; i++) {
+    let center = nodes[i].center();
+    let radius = nodes[i].radius();
+    if(center.x - radius < _topLeftBounderyMarker.x) _topLeftBounderyMarker.x = center.x - radius;
+    if(center.x + radius > _bottomRightBounderyMarker.x) _bottomRightBounderyMarker.x = center.x + radius;
+    if(center.y - radius < _topLeftBounderyMarker.y) _topLeftBounderyMarker.y = center.y - radius;
+    if(center.y + radius > _bottomRightBounderyMarker.y) _bottomRightBounderyMarker.y = center.y + radius;
+  }
 }
