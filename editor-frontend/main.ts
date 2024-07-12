@@ -23,6 +23,7 @@ const SCROLL_SENSITIVITY = 0.3;;
 
 // Globals
 let _state: "waiting" |
+            "panning" |
             "dragging" |
             "selecting" |
             "interacting" |
@@ -98,17 +99,7 @@ window.addEventListener("keydown", function(e: KeyboardEvent) {
 // Scrolling
 window.addEventListener("wheel", function(e: WheelEvent) {
   const change = {x: -e.deltaX * SCROLL_SENSITIVITY, y: -e.deltaY * SCROLL_SENSITIVITY};
-  // Prevent user from scrolling too far away
-  // TODO
-  // Pan view
-  _pan.x -= change.x;
-  _pan.y -= change.y;
-  // Update positions of all objects
-  for(var i = 0; i < nodes.length; i++) {
-    nodes[i].dragByAmount(change);
-  }
-  // Update canvas
-  redrawCanvas();
+  dragCanvas(change);
 }, true);
 
 // Mouse Down
@@ -151,6 +142,13 @@ function onMouseDown(e: MouseEvent | TouchEvent) {
     if(arrow != null) {
       switchToStateDraggingArrow(arrow, t);
     }
+    else if(e.type === "mousedown") {
+      let em = e as MouseEvent;
+      if(em.button === 2) {
+        // Otherwise, start dragging the screen
+        switchToStatePanning();
+      }
+    }
   }
 }
 
@@ -178,13 +176,13 @@ function onMouseMove(e: MouseEvent | TouchEvent) {
     mouse.x = em.clientX;
     mouse.y = em.clientY;
   }
+  // Find the amount the mouse moved
+  let change = {x: 0, y: 0};
+  change.x = mouse.x - prevMouse.x;
+  change.y = mouse.y - prevMouse.y;
 
   if(_state === "dragging") {
     _userMightBeTryingToInteractWithNode = false;
-    // Find the amount the mouse moved
-    let change = {x: 0, y: 0};
-    change.x = mouse.x - prevMouse.x;
-    change.y = mouse.y - prevMouse.y;
     // Add the change to all the selected nodes
     for(var i = 0; i < selectedNodes.length; i++) {
       selectedNodes[i].dragByAmount(change);
@@ -206,6 +204,9 @@ function onMouseMove(e: MouseEvent | TouchEvent) {
     change.y = mouse.y - prevMouse.y;
     _arrowThatIsBeingDragged.bendArrow(change, _tValueOfArrowBeingDragged);
     redrawCanvas();
+  }
+  else if(_state === "panning") {
+    dragCanvas(change);
   }
 
   // Update prevMouse for the next time this function runs
@@ -241,6 +242,14 @@ function onMouseUp(e: MouseEvent | TouchEvent) {
   }
   else if(_state === "dragging arrow") {
     switchToStateInteractingWithArrow(_arrowThatIsBeingDragged);
+  }
+  else if(_state === "panning") {
+    if(e.type === "mouseup") {
+      let em = e as MouseEvent;
+      if(em.button === 2) {
+        switchToStateWaiting();
+      }
+    }
   }
 }
 
@@ -314,6 +323,11 @@ function switchToStateWaiting() {
   console.log("waiting");
   turnOnArrowHandleSystem();
 }
+function switchToStatePanning() {
+  resetState();
+  _state = "panning";
+  console.log("panning");
+}
 function switchToStateDragging(node: GraphNode, shiftButtonIsPressed: boolean) {
   resetState();
   _state = "dragging";
@@ -382,8 +396,9 @@ function resetState() {
     case "waiting":
       turnOffArrowHandleSystem();
       break;
+    case "panning":
+      break;
     case "dragging":
-      resizeScreen();
       _nodeThatIsDirectTargetOfDrag = null;
       _userMightBeTryingToInteractWithNode = false;
       break;
@@ -528,21 +543,21 @@ function turnOffArrowHandleSystem() {
   _nodeThatHasArrowHandle = null;
   redrawCanvas();
 }
-function resizeScreen() {
-  let centerOfMovedNode = _nodeThatIsDirectTargetOfDrag.center();
-  if(centerOfMovedNode.x < VIEW_MARGIN) {
-  }
-  if(centerOfMovedNode.y < VIEW_MARGIN) {
-  }
-  if(centerOfMovedNode.x > canvas.width - VIEW_MARGIN) {
-  }
-  if(centerOfMovedNode.y > canvas.height - VIEW_MARGIN) {
-  }
-}
 function getArrowAt(point: Vector): {arrow: Arrow | null, t: number | null} {
   for(let i = 0; i < arrows.length; i++) {
     let {collision, t} = arrows[i].checkForCollisionWithPoint(point);
     if(collision) return {arrow: arrows[i], t: t};
   }
   return {arrow: null, t: null};
+}
+function dragCanvas(change: Vector) {
+  // Prevent user from scrolling too far away
+  // TODO
+  // Update positions of all objects
+  for(var i = 0; i < nodes.length; i++) {
+    // TODO: don't drag the node being dragged if _state === "dragging"
+    nodes[i].dragByAmount(change);
+  }
+  // Update canvas
+  redrawCanvas();
 }
