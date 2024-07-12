@@ -81,19 +81,19 @@ abstract class GraphNode {
   }
 }
 
-class TextNode extends GraphNode { // TODO: when resizing, adjust positions of arrows as well
-  private ASSUMED_WIDTH_OF_CHARACTER = 20;
-  private ASSUMED_HEIGHT_OF_LINE = 20;
-  private MIN_WIDTH = 100;
+class TextNode extends GraphNode {
+  private ASSUMED_WIDTH_OF_CHARACTER = 10;
+  private ASSUMED_HEIGHT_OF_LINE = 15;
+  private MIN_WIDTH = 80;
   constructor(container: HTMLElement, eventHandler: (node: GraphNode, e: MouseEvent) => void) {
     super(container, eventHandler);
-    container.style.padding = "10px";
+    container.style.padding = "5px";
     container.style.border = "3px solid black";
-    container.style.borderRadius = "5px";
-    container.style.width = this.MIN_WIDTH + "px";
+    container.style.borderRadius = "6px";
+    container.style.width = "100px"; // Start out wider
     container.style.textAlign = "center";
     container.style.overflowWrap = "break-word";
-    container.style.minHeight = "30px";
+    container.style.minHeight = "20px";
     container.style.backgroundColor = "white";
   }
   startInteraction() {
@@ -102,8 +102,8 @@ class TextNode extends GraphNode { // TODO: when resizing, adjust positions of a
     // Turn on editing
     this.container.contentEditable = "true";
     // Keep the width constant until interaction is over
-    this.container.style.width = this.container.clientWidth - 19.8 + "px";
-    this.container.style.padding = "9.9px 10px";
+    this.container.style.width = this.container.clientWidth - 9.8 + "px";
+    this.container.style.padding = "4.9px 5px";
     this.container.focus();
     // TODO: automatically select contents
   }
@@ -117,7 +117,7 @@ class TextNode extends GraphNode { // TODO: when resizing, adjust positions of a
     const assumedAreaOfText = assumedWidthOfText * this.ASSUMED_HEIGHT_OF_LINE;
     const desiredWidth = Math.pow(assumedAreaOfText, .5);
     this.container.style.width = (desiredWidth > this.MIN_WIDTH ? desiredWidth : this.MIN_WIDTH) + "px";
-    this.container.style.padding = "10px";
+    this.container.style.padding = "5px";
   }
   collidesWithPoint(point: Vector): boolean {
     if(point.x < this.position.x) return false;

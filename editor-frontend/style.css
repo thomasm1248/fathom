@@ -27,7 +27,7 @@ canvas {
     touch-action: none;
     user-select: none;
     display: inline-block;
-    font: 18px Sans-serif;
+    font: 15px Sans-serif;
     position: absolute;
 }
 
