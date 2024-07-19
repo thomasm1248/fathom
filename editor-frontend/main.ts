@@ -15,6 +15,9 @@ canvas.width = surface.offsetWidth;
 canvas.height = surface.offsetHeight;
 surface.appendChild(canvas);
 let ctx = canvas.getContext("2d");
+let selectionBox = document.createElement("div");
+selectionBox.id = "selection-box";
+surface.appendChild(selectionBox);
 
 // Settings
 const ARROW_HANDLE_MARGIN = 20;
@@ -157,6 +160,9 @@ function onMouseDown(e: MouseEvent | TouchEvent) {
         // Otherwise, start dragging the screen
         switchToStatePanning();
       }
+      else {
+        switchToStateSelecting();
+      }
     }
   }
 }
@@ -219,6 +225,13 @@ function onMouseMove(e: MouseEvent | TouchEvent) {
   else if(_state === "panning") {
     dragCanvas(change);
   }
+  else if(_state === "selecting") {
+    selectionBox.style.width = Math.abs(mouse.x - _mousePositionAtStartOfSelection.x) + "px";
+    selectionBox.style.height = Math.abs(mouse.y - _mousePositionAtStartOfSelection.y) + "px";
+    let left = Math.min(_mousePositionAtStartOfSelection.x, mouse.x);
+    let top = Math.min(_mousePositionAtStartOfSelection.y, mouse.y);
+    selectionBox.style.transform = "translate3d(" + left + "px, " + top + "px, 0)";
+  }
 
   // Update prevMouse for the next time this function runs
   prevMouse.x = mouse.x;
@@ -260,6 +273,23 @@ function onMouseUp(e: MouseEvent | TouchEvent) {
       if(em.button === 2) {
         switchToStateWaiting();
       }
+    }
+  }
+  else if(_state === "selecting") {
+    // Find the bounding box of the selection
+    let left = Math.min(_mousePositionAtStartOfSelection.x, mouse.x);
+    let top = Math.min(_mousePositionAtStartOfSelection.y, mouse.y);
+    let right = Math.max(_mousePositionAtStartOfSelection.x, mouse.x);
+    let bottom = Math.max(_mousePositionAtStartOfSelection.y, mouse.y);
+    // Switch to waiting state
+    switchToStateWaiting();
+    // Add nodes within bounds to selection
+    for(let i = 0; i < nodes.length; i++) {
+      if(nodes[i].position.x < left) continue;
+      if(nodes[i].position.y < top) continue;
+      if(nodes[i].position.x + nodes[i].container.offsetWidth > right) continue;
+      if(nodes[i].position.y + nodes[i].container.offsetHeight > bottom) continue;
+      addNodeToSelection(nodes[i]);
     }
   }
 }
@@ -358,10 +388,17 @@ function switchToStateDragging(node: GraphNode, shiftButtonIsPressed: boolean) {
   // Bring it to the front
   surface.appendChild(node.container);
 }
+let _mousePositionAtStartOfSelection: Vector;
 function switchToStateSelecting() {
   resetState();
   _state = "selecting";
   console.log("selecting");
+  selectionBox.style.transform = "translate3d(" + mouse.x + "px, " + mouse.y + "px, 0)";
+  selectionBox.style.width = "0";
+  selectionBox.style.height = "0";
+  selectionBox.style.visibility = "visible";
+  surface.appendChild(selectionBox);
+  _mousePositionAtStartOfSelection = vCopy(mouse);
 }
 function switchToStateInteracting(node: GraphNode) {
   resetState();
@@ -415,6 +452,8 @@ function resetState() {
       _userMightBeTryingToInteractWithNode = false;
       break;
     case "selecting":
+      selectionBox.style.visibility = "collapse";
+      _mousePositionAtStartOfSelection = null;
       break;
     case "interacting":
       _nodeThatIsBeingInteractedWith.stopInteraction();
