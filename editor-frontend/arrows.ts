@@ -213,8 +213,8 @@ class Arrow {
     if(e.key === "Backspace") {
       if(this.label[this.label.length-1].length > 0) {
         // Remove most recently typed character
-        let lastLine = this.label[this.label.length-1];
-        this.label[lastLine.length-1] = lastLine.substring(0, lastLine.length-2);
+        let lastLine = this.label.pop();
+        this.label.push(lastLine.substring(0, lastLine.length-1));
         return true;
       } else {
         // Remove last line
