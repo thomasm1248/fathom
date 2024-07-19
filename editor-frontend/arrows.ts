@@ -1,5 +1,6 @@
 
 const SIZE_OF_ARROWHEAD = 5;
+const ARROW_END_MARGIN = 8;
 const COLLISION_MARGIN = 20;
 const COLLISION_INTERVALS = 10;
 const COLLISION_PRECISION = 4;
@@ -24,6 +25,7 @@ class Arrow {
   draw(ctx: CanvasRenderingContext2D) {
     // Some calculations
     const start = this.sourceNode.center();
+    let control = this.control;
     const end = this.targetNode?.center() ?? this.mouse;
     let intersectionWithTargetNode = end;
     let intersectionT = 1;
@@ -31,6 +33,7 @@ class Arrow {
       let {point, t} = findWhereCurveIntersectsNode(start, this.control, end, this.targetNode);
       intersectionWithTargetNode = point;
       intersectionT = t;
+      control = shortenCurve(start, control, end, intersectionT);
     }
     // Start drawing
     ctx.save();
@@ -38,7 +41,7 @@ class Arrow {
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
-    ctx.quadraticCurveTo(this.control.x, this.control.y, end.x, end.y);
+    ctx.quadraticCurveTo(control.x, control.y, intersectionWithTargetNode.x, intersectionWithTargetNode.y);
     // Use a highlight when being interacted with
     if(this.isBeingInteractedWith) {
       ctx.shadowColor = "blue";
@@ -52,24 +55,17 @@ class Arrow {
     // Prepare to draw arrowhead
     ctx.save();
     let d = vSubtract(
-              quadraticInterpolation(start, this.control, end, intersectionT),
-              quadraticInterpolation(start, this.control, end, intersectionT - 0.01)
+              quadraticInterpolation(start, control, end, 1),
+              quadraticInterpolation(start, control, end, 0.999)
             );
     let direction = Math.atan2(d.y, d.x);
     ctx.translate(intersectionWithTargetNode.x, intersectionWithTargetNode.y);
     ctx.rotate(direction);
-    // Draw a circle to cover up part of the curve
-    if(this.targetNode != null) {
-      ctx.beginPath();
-      ctx.arc(0, 0, 3, 0, Math.PI*2);
-      ctx.fillStyle = "white";
-      ctx.fill();
-    }
     // Draw arrowhead
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-SIZE_OF_ARROWHEAD*2, SIZE_OF_ARROWHEAD);
-    ctx.lineTo(-SIZE_OF_ARROWHEAD*2, -SIZE_OF_ARROWHEAD);
+    ctx.moveTo(SIZE_OF_ARROWHEAD, 0);
+    ctx.lineTo(-SIZE_OF_ARROWHEAD, SIZE_OF_ARROWHEAD);
+    ctx.lineTo(-SIZE_OF_ARROWHEAD, -SIZE_OF_ARROWHEAD);
     ctx.fillStyle = "black";
     ctx.fill();
     ctx.restore();
@@ -275,7 +271,7 @@ function findWhereCurveIntersectsNode(start: Vector, control: Vector, end: Vecto
   let sizeOfStepTaken: number = null;
   while((sizeOfStepTaken ?? 100/*big number*/) > toleranceSquared) {
     testPoint = quadraticInterpolation(start, control, end, currentT);
-    if(node.collidesWithPoint(testPoint)) {
+    if(node.collidesWithPoint(testPoint, ARROW_END_MARGIN)) {
       currentT -= searchIncrement;
     } else {
       currentT += searchIncrement;
@@ -287,4 +283,7 @@ function findWhereCurveIntersectsNode(start: Vector, control: Vector, end: Vecto
     prevTestPoint = testPoint;
   }
   return {point: testPoint, t: currentT};
+}
+function shortenCurve(start: Vector, control: Vector, end: Vector, t: number): Vector {
+  return vAdd(start, vScale(vSubtract(control, start), t));
 }

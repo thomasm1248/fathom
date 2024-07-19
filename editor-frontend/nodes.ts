@@ -39,7 +39,7 @@ abstract class GraphNode {
   }
   abstract startInteraction(): void;
   abstract stopInteraction(): void;
-  abstract collidesWithPoint(point: Vector): boolean;
+  abstract collidesWithPoint(point: Vector, margin: number): boolean;
   dragByAmount(change: Vector) {
     // Update connected arrows first so they can know where this node started its movement from
     for(var i = 0; i < this.incomingArrows.length; i++) {
@@ -126,11 +126,11 @@ class TextNode extends GraphNode {
     this.container.style.width = (desiredWidth > this.MIN_WIDTH ? desiredWidth : this.MIN_WIDTH) + "px";
     this.container.style.padding = "5px";
   }
-  collidesWithPoint(point: Vector): boolean {
-    if(point.x < this.position.x) return false;
-    if(point.x > this.position.x + this.container.offsetWidth) return false;
-    if(point.y < this.position.y) return false;
-    if(point.y > this.position.y + this.container.offsetHeight) return false;
+  collidesWithPoint(point: Vector, margin: number): boolean {
+    if(point.x < this.position.x - margin) return false;
+    if(point.x > this.position.x + this.container.offsetWidth + margin) return false;
+    if(point.y < this.position.y - margin) return false;
+    if(point.y > this.position.y + this.container.offsetHeight + margin) return false;
     return true;
   }
   clearContents(): void {
@@ -160,11 +160,11 @@ class LabelNode extends GraphNode {
     // Turn off editing
     this.container.contentEditable = "false";
   }
-  collidesWithPoint(point: Vector): boolean {
-    if(point.x < this.position.x) return false;
-    if(point.x > this.position.x + this.container.offsetWidth) return false;
-    if(point.y < this.position.y) return false;
-    if(point.y > this.position.y + this.container.offsetHeight) return false;
+  collidesWithPoint(point: Vector, margin: number): boolean {
+    if(point.x < this.position.x - margin) return false;
+    if(point.x > this.position.x + this.container.offsetWidth + margin) return false;
+    if(point.y < this.position.y - margin) return false;
+    if(point.y > this.position.y + this.container.offsetHeight + margin) return false;
     return true;
   }
   clearContents(): void {
