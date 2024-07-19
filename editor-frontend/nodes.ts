@@ -41,16 +41,17 @@ abstract class GraphNode {
   abstract stopInteraction(): void;
   abstract collidesWithPoint(point: Vector): boolean;
   dragByAmount(change: Vector) {
+    // Update connected arrows first so they can know where this node started its movement from
+    for(var i = 0; i < this.incomingArrows.length; i++) {
+      this.incomingArrows[i].targetHasMovedByAmount(change);
+    }
+    for(var i = 0; i < this.outgoingArrows.length; i++) {
+      this.outgoingArrows[i].sourceHasMovedByAmount(change);
+    }
+    // Update own position last
     this.position.x += change.x;
     this.position.y += change.y;
     this.makeSureGraphicPositionMatchesLogicalPosition();
-    // Update connected arrows as well
-    for(var i = 0; i < this.incomingArrows.length; i++) {
-      this.incomingArrows[i].endPointHasMovedByAmount(change);
-    }
-    for(var i = 0; i < this.outgoingArrows.length; i++) {
-      this.outgoingArrows[i].endPointHasMovedByAmount(change);
-    }
   }
   makeSureGraphicPositionMatchesLogicalPosition() {
     this.container.style.transform = "translate3d(" + this.position.x + "px, " + this.position.y + "px, 0)";
@@ -79,6 +80,13 @@ abstract class GraphNode {
       y: this.position.y + this.container.offsetHeight / 2,
     };
   }
+}
+
+function isTextNode(node: GraphNode): node is TextNode {
+  return (node as TextNode).isTextNodeInstance != null;
+}
+function isLabelNode(node: GraphNode): node is LabelNode {
+  return (node as LabelNode).isLabelNodeInstance != null;
 }
 
 class TextNode extends GraphNode {
@@ -130,6 +138,39 @@ class TextNode extends GraphNode {
   }
 }
 
-function isTextNode(node: GraphNode): node is TextNode {
-  return (node as TextNode).isTextNodeInstance != null;
+class LabelNode extends GraphNode {
+  private ASSUMED_AREA_OF_CHARACTER = 100;
+  isLabelNodeInstance = true;
+  constructor(container: HTMLElement, eventHandler: (node: GraphNode, e: MouseEvent) => void, position: Vector) {
+    super(container, eventHandler, position);
+    container.style.textAlign = "center";
+    container.style.font = "30px Sans-serif";
+    container.style.backgroundColor = "white";
+  }
+  startInteraction() {
+    // Turn on active flag
+    this.isBeingInteractedWith = true;
+    // Turn on editing
+    this.container.contentEditable = "true";
+    this.container.focus();
+  }
+  stopInteraction() {
+    // Turn off active flag
+    this.isBeingInteractedWith = false;
+    // Turn off editing
+    this.container.contentEditable = "false";
+  }
+  collidesWithPoint(point: Vector): boolean {
+    if(point.x < this.position.x) return false;
+    if(point.x > this.position.x + this.container.offsetWidth) return false;
+    if(point.y < this.position.y) return false;
+    if(point.y > this.position.y + this.container.offsetHeight) return false;
+    return true;
+  }
+  clearContents(): void {
+    this.container.innerHTML = "";
+  }
+  isEmpty(): boolean {
+    return this.container.innerHTML == "";
+  }
 }

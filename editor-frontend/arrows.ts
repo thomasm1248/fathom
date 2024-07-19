@@ -129,9 +129,35 @@ class Arrow {
       this.targetNode.removeIncomingArrow(this);
     }
   }
-  endPointHasMovedByAmount(change: Vector) {
-    this.control.x += change.x / 2;
-    this.control.y += change.y / 2;
+  sourceHasMovedByAmount(change: Vector) {
+    this.updateControlPointAutomatically(this.targetNode.center(), this.sourceNode.center(), change);
+  }
+  targetHasMovedByAmount(change: Vector) {
+    this.updateControlPointAutomatically(this.sourceNode.center(), this.targetNode.center(), change);
+  }
+  updateControlPointAutomatically(start: Vector, end: Vector, changeInEnd: Vector) {
+    // Make current calculations
+    let {amountForward, amountRight} = this.getProfileOfControlPoint(start, end);
+    let percentageForward = amountForward / vDistance(start, end);
+    // Change endpoint
+    end = vAdd(end, changeInEnd);
+    // Calculate new position of control point
+    let vFromStartToEnd = vSubtract(end, start);
+    let normal = vNormalize(vFromStartToEnd);
+    let rNormal = {x: -normal.y, y: normal.x};
+    let vAmountRight = vScale(rNormal, amountRight);
+    let vAmountForward = vScale(normal, vDistance(start, end) * percentageForward);
+    this.control = vAdd(vAdd(vAmountForward, vAmountRight), start);
+    console.log(this.control);
+  }
+  getProfileOfControlPoint(start: Vector, end: Vector): {amountForward: number, amountRight: number} {
+    let vFromStartToEnd = vSubtract(end, start);
+    let normal = vNormalize(vFromStartToEnd);
+    let rNormal = {x: -normal.y, y: normal.x};
+    let vControlDiff = vSubtract(this.control, start);
+    let sForwardAmountOfControl = vDot(vControlDiff, normal);
+    let sSidewaysAmountOfControl = vDot(vControlDiff, rNormal);
+    return {amountForward: sForwardAmountOfControl, amountRight: sSidewaysAmountOfControl};
   }
   startInteraction() {
     this.isBeingInteractedWith = true;

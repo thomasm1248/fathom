@@ -86,6 +86,7 @@ window.addEventListener("keydown", function(e: KeyboardEvent) {
       if(_nodeThatWasMostRecentlySelected != null) {
         // Edit that node
         if(isTextNode(_nodeThatWasMostRecentlySelected)) _nodeThatWasMostRecentlySelected.clearContents();
+        if(isLabelNode(_nodeThatWasMostRecentlySelected)) _nodeThatWasMostRecentlySelected.clearContents();
         switchToStateInteracting(_nodeThatWasMostRecentlySelected);
       } else {
         // Make a new node to type in instead
@@ -224,6 +225,7 @@ function onMouseMove(e: MouseEvent | TouchEvent) {
     redrawCanvas();
   }
   else if(_state === "panning") {
+    _userMightBeTryingToMakeALabelNode = false;
     dragCanvas(change);
   }
   else if(_state === "selecting") {
@@ -272,7 +274,15 @@ function onMouseUp(e: MouseEvent | TouchEvent) {
     if(e.type === "mouseup") {
       let em = e as MouseEvent;
       if(em.button === 2) {
-        switchToStateWaiting();
+        if(_userMightBeTryingToMakeALabelNode) {
+          // Make a label node
+          const newNode = new LabelNode(getNewNodeContainer(), mouseEventFromNode, mouse);
+          nodes.push(newNode);
+          switchToStateInteracting(newNode);
+        } else {
+          // Go back to waiting state
+          switchToStateWaiting();
+        }
       }
     }
   }
@@ -365,10 +375,12 @@ function switchToStateWaiting() {
   console.log("waiting");
   turnOnArrowHandleSystem();
 }
+let _userMightBeTryingToMakeALabelNode: boolean;
 function switchToStatePanning() {
   resetState();
   _state = "panning";
   console.log("panning");
+  _userMightBeTryingToMakeALabelNode = true;
 }
 function switchToStateDragging(node: GraphNode, shiftButtonIsPressed: boolean) {
   resetState();
@@ -447,6 +459,7 @@ function resetState() {
       _nodeThatIsBeingInteractedWith = null;
       break;
     case "panning":
+      _userMightBeTryingToMakeALabelNode = null;
       break;
     case "dragging":
       _nodeThatIsDirectTargetOfDrag = null;
@@ -457,6 +470,9 @@ function resetState() {
       _mousePositionAtStartOfSelection = null;
       break;
     case "interacting":
+      if(isLabelNode(_nodeThatIsBeingInteractedWith) && _nodeThatIsBeingInteractedWith.isEmpty()) {
+        deleteNode(_nodeThatIsBeingInteractedWith);
+      }
       _nodeThatIsBeingInteractedWith.stopInteraction();
       _nodeThatIsBeingInteractedWith = null;
       turnOffArrowHandleSystem();
@@ -508,27 +524,29 @@ function addNodeToSelection(node: GraphNode) {
 }
 function deleteSelectedItems() {
   for(var i = 0; i < selectedNodes.length; i++) {
-    const nodeToDelete = selectedNodes[i];
-    // Remove connections
-    while(nodeToDelete.outgoingArrows.length > 0) {
-      let arrow = nodeToDelete.outgoingArrows[0];
-      arrow.prepareForDeletion();
-      removeFromArray(arrow, arrows);
-    }
-    while(nodeToDelete.incomingArrows.length > 0) {
-      let arrow = nodeToDelete.incomingArrows[0];
-      arrow.prepareForDeletion();
-      removeFromArray(arrow, arrows);
-    }
-    // Remove this node
-    removeFromArray(nodeToDelete, nodes);
-    surface.removeChild(nodeToDelete.container);
+    deleteNode(selectedNodes[i]);
   }
-  selectedNodes = [];
-  // TODO: also delete selected connections and other things
   // Cleanup
-  _nodeThatHasArrowHandle = null;
+  _nodeThatHasArrowHandle = null; // TODO: this shouldn't be managed here
   redrawCanvas();
+}
+function deleteNode(node: GraphNode) {
+  // Remove from selection
+  removeFromArray(node, selectedNodes);
+  // Remove connections
+  while(node.outgoingArrows.length > 0) {
+    let arrow = node.outgoingArrows[0];
+    arrow.prepareForDeletion();
+    removeFromArray(arrow, arrows);
+  }
+  while(node.incomingArrows.length > 0) {
+    let arrow = node.incomingArrows[0];
+    arrow.prepareForDeletion();
+    removeFromArray(arrow, arrows);
+  }
+  // Remove this node
+  removeFromArray(node, nodes);
+  surface.removeChild(node.container);
 }
 function removeFromArray<T>(item: T, array: T[]) {
   const index = array.indexOf(item);
@@ -600,6 +618,13 @@ function vLength(v: Vector) {
 }
 function vScale(v: Vector, s: number) {
   return {x: v.x * s, y: v.y * s};
+}
+function vNormalize(v: Vector) {
+  let length = vLength(v);
+  return vScale(v, 1/length);
+}
+function vDot(a: Vector, b: Vector) {
+  return a.x * b.x + a.y * b.y;
 }
 function turnOnArrowHandleSystem() {
   _arrowHandleSystemIsOn = true;
