@@ -41,6 +41,7 @@ let _arrowHandleSystemIsOn: boolean = true;
 let _arrowThatIsBeingCreated: Arrow;
 let _nodeThatArrowMightConnectTo: GraphNode;
 let _arrowThatIsBeingInteractedWith: Arrow;
+let _nodeThatWasMostRecentlySelected: GraphNode;
 
 let nodes: GraphNode[] = [];
 let selectedNodes: GraphNode[] = [];
@@ -65,24 +66,33 @@ redrawCanvas();
 window.addEventListener("contextmenu", function(e: MouseEvent) {
   e.preventDefault();
   e.stopPropagation();
-  // For now, right clicking creates a new node
-  const newNode = new TextNode(getNewNodeContainer(), mouseEventFromNode);
-  nodes.push(newNode);
-  switchToStateInteracting(newNode);
-  // TODO: create a context menu, and show that instead
 }, false);
 
 // Key Down
 window.addEventListener("keydown", function(e: KeyboardEvent) {
   if(_state === "waiting") {
     e.stopPropagation();
-    switch(e.keyCode) {
-      case 8: // Backspace
-        deleteSelectedItems(); // TODO: add undo button
-        break;
+    // Backspace deletes selected nodes
+    if(e.keyCode == 8) {
+      deleteSelectedItems(); // TODO: add undo button
+      return;
+    }
+    // User started typing without interacting with a node
+    if(e.key.length == 1) {
+      // Has the user recently selected a node?
+      if(_nodeThatWasMostRecentlySelected != null) {
+        // Edit that node
+        if(isTextNode(_nodeThatWasMostRecentlySelected)) _nodeThatWasMostRecentlySelected.clearContents();
+        switchToStateInteracting(_nodeThatWasMostRecentlySelected);
+      } else {
+        // Make a new node to type in instead
+        const newNode = new TextNode(getNewNodeContainer(), mouseEventFromNode, mouse);
+        nodes.push(newNode);
+        switchToStateInteracting(newNode);
+      }
     }
   }
-  if(_state === "interacting with arrow") {
+  else if(_state === "interacting with arrow") {
     if(e.keyCode === 8 && !_arrowThatIsBeingInteractedWith.labelIsBeingEdited) {
       const arrowThatNeedsToBeDeleted = _arrowThatIsBeingInteractedWith;
       switchToStateWaiting();
@@ -396,6 +406,7 @@ function resetState() {
   switch(_state) {
     case "waiting":
       turnOffArrowHandleSystem();
+      _nodeThatIsBeingInteractedWith = null;
       break;
     case "panning":
       break;
@@ -447,10 +458,12 @@ function clearSelection() {
     selectedNodes[i].container.classList.remove("selected");
   }
   selectedNodes = [];
+  _nodeThatWasMostRecentlySelected = null;
 }
 function addNodeToSelection(node: GraphNode) {
   if(!node.isSelected) selectedNodes.push(node);
   node.isSelected = true;
+  _nodeThatWasMostRecentlySelected = node;
   node.container.classList.add("selected");
 }
 function deleteSelectedItems() {

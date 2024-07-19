@@ -8,10 +8,10 @@ abstract class GraphNode {
   isSelected = false;
   position: Vector;
 
-  constructor(container: HTMLElement, eventHandler: (node: GraphNode, e: MouseEvent | TouchEvent) => void) {
+  constructor(container: HTMLElement, eventHandler: (node: GraphNode, e: MouseEvent | TouchEvent) => void, position: Vector) {
     this.container = container;
     const self = this;
-    this.position = {x: 0, y: 0};
+    this.position = vCopy(position);
     this.makeSureGraphicPositionMatchesLogicalPosition();
     // Hovering
     container.addEventListener("mouseover", function(e: MouseEvent) { // TODO: move these to main.ts
@@ -84,8 +84,9 @@ abstract class GraphNode {
 class TextNode extends GraphNode {
   private ASSUMED_AREA_OF_CHARACTER = 100;
   private MIN_WIDTH = 80;
-  constructor(container: HTMLElement, eventHandler: (node: GraphNode, e: MouseEvent) => void) {
-    super(container, eventHandler);
+  isTextNodeInstance = true;
+  constructor(container: HTMLElement, eventHandler: (node: GraphNode, e: MouseEvent) => void, position: Vector) {
+    super(container, eventHandler, position);
     container.style.padding = "5px";
     container.style.border = "3px solid black";
     container.style.borderRadius = "6px";
@@ -124,4 +125,11 @@ class TextNode extends GraphNode {
     if(point.y > this.position.y + this.container.offsetHeight) return false;
     return true;
   }
+  clearContents(): void {
+    this.container.innerHTML = "";
+  }
+}
+
+function isTextNode(node: GraphNode): node is TextNode {
+  return (node as TextNode).isTextNodeInstance != null;
 }
