@@ -82,8 +82,7 @@ abstract class GraphNode {
 }
 
 class TextNode extends GraphNode {
-  private ASSUMED_WIDTH_OF_CHARACTER = 10;
-  private ASSUMED_HEIGHT_OF_LINE = 15;
+  private ASSUMED_AREA_OF_CHARACTER = 100;
   private MIN_WIDTH = 80;
   constructor(container: HTMLElement, eventHandler: (node: GraphNode, e: MouseEvent) => void) {
     super(container, eventHandler);
@@ -113,8 +112,7 @@ class TextNode extends GraphNode {
     // Turn off editing
     this.container.contentEditable = "false";
     // Reset the width and padding
-    const assumedWidthOfText = this.container.innerHTML.length * this.ASSUMED_WIDTH_OF_CHARACTER;
-    const assumedAreaOfText = assumedWidthOfText * this.ASSUMED_HEIGHT_OF_LINE;
+    const assumedAreaOfText = this.container.innerHTML.length * this.ASSUMED_AREA_OF_CHARACTER;
     const desiredWidth = Math.pow(assumedAreaOfText, .5);
     this.container.style.width = (desiredWidth > this.MIN_WIDTH ? desiredWidth : this.MIN_WIDTH) + "px";
     this.container.style.padding = "5px";
