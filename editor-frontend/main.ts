@@ -91,6 +91,7 @@ window.addEventListener("keydown", function(e: KeyboardEvent) {
         // Make a new node to type in instead
         const newNode = new TextNode(getNewNodeContainer(), mouseEventFromNode, mouse);
         nodes.push(newNode);
+        recalculateCanvasBounderies();
         switchToStateInteracting(newNode);
       }
     }
@@ -637,7 +638,6 @@ function dragCanvas(change: Vector) {
   redrawCanvas();
 }
 function recalculateCanvasBounderies() {
-  // TODO: make sure to recalculate bounderies whenever a new node is created
   if(nodes.length > 0) {
     // Set both to the center of a random node
     const center = nodes[0].center();
