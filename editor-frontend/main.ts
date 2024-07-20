@@ -136,7 +136,7 @@ function onMouseDown(e: MouseEvent | TouchEvent) {
       switchToStateDraggingArrow(arrow, t);
     } else {
       // The user clicked away from the node being interacted with
-      switchToStateWaiting();
+      switchToStateSelecting();
     }
   }
   else if(_state === "interacting with arrow") {
@@ -147,7 +147,7 @@ function onMouseDown(e: MouseEvent | TouchEvent) {
       switchToStateDraggingArrow(arrow, t);
     } else {
       // User has clicked away from the current arrow
-      switchToStateWaiting();
+      switchToStateSelecting();
     }
   }
   else if(_state === "waiting") {
