@@ -9,9 +9,7 @@ TextNode::TextNode(SDL_Renderer* renderer, std::string text)
 }
 
 void TextNode::_render(SDL_Renderer* renderer) {
-    std::cout << "Rendering TextNode\n";
     SDL_Rect rect = getRect();
-    std::cout << rect.w<<' '<<rect.h<<'\n';
     rect.x = 0;
     rect.y = 0;
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);

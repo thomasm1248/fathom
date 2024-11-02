@@ -25,6 +25,9 @@ private:
         InteractingWithArrow
     };
     State state = State::Waiting;
+    SDL_Point mousePosition;
+    SDL_Point mouseVelocity;
+    bool shiftIsPressed = false; // TODO update this from events
     //std::string filepath;
     //File file;
     std::vector<std::shared_ptr<Node>> nodes;
@@ -33,16 +36,23 @@ private:
 
     void _render(SDL_Renderer* renderer);
 
+
+
     // State machine
+
+    void switchToStateWaiting();
+
+    void switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shiftButtonIsPressed);
+    bool _userMightBeTryingToInteractWithNode;
+    std::shared_ptr<Node> _nodeThatIsDirectTargetOfDrag;
+
+    void resetState();
+
     /*
     Node* _nodeThatIsBeingHovered;
     Node* _nodeThatWasMostRecentlySelected;
 
-    void switchToStateWaiting();
 
-    bool _userMightBeTryingToInteractWithNode;
-    Node* _nodeThatIsDirectTargetOfDrag;
-    void switchToStateDragging(Node* nodeToBeDragged, bool shiftButtonIsPressed);
 
     Vector2 _mousePositionAtStartOfSelection;
     void switchToStateSelecting();
@@ -61,10 +71,15 @@ private:
     //Arrow* _arrowThatIsBeingInteractedWith TODO
     void switchToStateInteractingWithArrow();
 
-    void resetState();
 
     bool _arrowHandleSystemIsOn;
     Node* _nodeThatHasArrowHandle;
     void turnOnArrowHandleSystem();
     void turnOffArrowHandleSystem();*/
+    
+
+
+    // Util functions
+    std::shared_ptr<Node> getNodeAtMouse();
+    void moveNodeToFront(std::shared_ptr<Node> node);
 };

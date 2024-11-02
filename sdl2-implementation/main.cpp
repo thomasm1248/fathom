@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
                 exit(0);
             }
             // Send events to View
-            currentView.handleEvent(event);
+            currentView->handleEvent(event);
         }
 
         // Render UI
