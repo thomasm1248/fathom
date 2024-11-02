@@ -7,6 +7,8 @@ View::View(SDL_Renderer* renderer)
 {
     std::string text = "Hello World";
     nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));
+    nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));
+    nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));
 }
 
 void View::handleEvent(const SDL_Event& event) {
