@@ -128,6 +128,12 @@ void Renderable::moveTexture(int x, int y) {
     }
 }
 
+void Renderable::replaceTexture(SDL_Texture* texture) {
+    if(currentTexture)
+        SDL_DestroyTexture(currentTexture);
+    currentTexture = texture;
+}
+
 bool Renderable::hasMoved() {
     return moved;
 }

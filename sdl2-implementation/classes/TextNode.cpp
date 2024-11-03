@@ -4,6 +4,7 @@
 TextNode::TextNode(SDL_Renderer* renderer, std::string text)
     : Node(renderer)
     , text(text)
+    , textBox(renderer, 30, "noteuh")
 {
     initializeTexture(100, 100);
 }
@@ -14,4 +15,5 @@ void TextNode::_render(SDL_Renderer* renderer) {
     rect.y = 0;
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderFillRect(renderer, &rect);
+    drawChild(textBox);
 }

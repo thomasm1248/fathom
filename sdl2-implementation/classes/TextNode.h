@@ -2,6 +2,7 @@
 
 #include "Node.h"
 #include <string>
+#include "TextBox.h"
 
 class TextNode : public Node
 {
@@ -10,6 +11,7 @@ public:
 
 private:
     std::string text;
+    TextBox textBox;
 
     void _render(SDL_Renderer* renderer);
 };

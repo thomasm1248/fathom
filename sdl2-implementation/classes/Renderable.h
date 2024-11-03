@@ -6,7 +6,7 @@ class Renderable
 {
 public:
     Renderable(SDL_Renderer* renderer);
-    ~Renderable();
+    virtual ~Renderable();
     SDL_Rect getRect();
     bool requestsToBeRedrawn();
     void render();
@@ -15,7 +15,6 @@ public:
     Renderable& operator=(Renderable const& other) = delete;
 
 protected:
-    SDL_Renderer* renderer;
     bool redrawRequested = true;
 
     void drawChild(Renderable& child);
@@ -23,10 +22,12 @@ protected:
     void initializeTexture(int width, int height);
     void resizeTexture(int width, int height);
     void moveTexture(int x, int y);
+    void replaceTexture(SDL_Texture* texture);
     bool hasMoved();
     virtual void _render(SDL_Renderer* renderer) = 0; // implemented by derived class
 
 private:
+    SDL_Renderer* renderer;
     SDL_Texture* currentTexture = NULL;
     SDL_Point position;
     bool moved = true;
