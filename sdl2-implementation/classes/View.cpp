@@ -5,7 +5,7 @@
 View::View(SDL_Renderer* renderer)
     : Renderable(renderer)
 {
-    std::string text = "Hello World";
+    std::string text = "Hello World\nThis is a test.\nAnother line that's actually really long.\nBye.";
     nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));
     nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));
     nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));

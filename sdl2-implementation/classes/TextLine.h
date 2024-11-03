@@ -10,7 +10,7 @@ class TextLine : public Renderable
 public:
     bool wrapped = false;
 
-    TextLine(SDL_Renderer* renderer, TTF_Font* font, std::string text);
+    TextLine(SDL_Renderer* renderer, TTF_Font* font, std::string text, const SDL_Point& location);
 
 private:
     std::string text;

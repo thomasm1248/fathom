@@ -28,6 +28,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // Initialize TTF
+    TTF_Init();
+
     // Create default view
     View* currentView = new View(renderer);
 
@@ -55,7 +58,12 @@ int main(int argc, char** argv) {
         SDL_Delay(17);
     }
 
+    // Delete views
+    delete currentView;
+    currentView = nullptr;
+
     // Free resources
+    TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

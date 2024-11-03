@@ -8,10 +8,12 @@ class TextNode : public Node
 {
 public:
     TextNode(SDL_Renderer* renderer, std::string text);
+    ~TextNode();
 
 private:
-    std::string text;
-    TextBox textBox;
+    static TTF_Font* font;
+    static int numberOfTextNodes;
+    std::shared_ptr<TextBox> textBox;
 
     void _render(SDL_Renderer* renderer);
 };
