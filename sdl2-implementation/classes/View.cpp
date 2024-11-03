@@ -49,6 +49,8 @@ void View::handleEvent(const SDL_Event& event) {
         }
         break;
     case SDL_WINDOWEVENT:
+        redrawRequested = true;
+        // TODO only request redraw when actually needed
         break;
     default:
         // Ignore event
@@ -94,6 +96,7 @@ void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shi
     _nodeThatIsDirectTargetOfDrag = nodeToBeDragged;
     // Bring this node to the front
     moveNodeToFront(nodeToBeDragged);
+    redrawRequested = true;
 }
 
 void View::resetState() {
