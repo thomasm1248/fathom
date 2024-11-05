@@ -27,10 +27,10 @@ private:
     State state = State::Waiting;
     SDL_Point mousePosition;
     SDL_Point mouseVelocity;
-    bool shiftIsPressed = false; // TODO update this from events
     //std::string filepath;
     //File file;
     std::vector<std::shared_ptr<Node>> nodes;
+    std::vector<std::shared_ptr<Node>> selectedNodes;
     //std::vector<Arrow> arrows;
     std::vector<SDL_Rect> overlapRects;
 
@@ -40,16 +40,23 @@ private:
 
     // State machine
 
+    // shared
+    void resetState();
+
+    // System: Hovering
+    void hoveringSystemOn(bool isIt);
+    bool _hoveringSystemIsOn = true;
+    std::shared_ptr<Node> _nodeThatIsBeingHovered;
+
+    // Waiting
     void switchToStateWaiting();
 
+    // Dragging
     void switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shiftButtonIsPressed);
     bool _userMightBeTryingToInteractWithNode;
     std::shared_ptr<Node> _nodeThatIsDirectTargetOfDrag;
 
-    void resetState();
-
     /*
-    Node* _nodeThatIsBeingHovered;
     Node* _nodeThatWasMostRecentlySelected;
 
 
@@ -82,4 +89,6 @@ private:
     // Util functions
     std::shared_ptr<Node> getNodeAtMouse();
     void moveNodeToFront(std::shared_ptr<Node> node);
+    void clearSelection();
+    void addNodeToSelection(std::shared_ptr<Node> node);
 };

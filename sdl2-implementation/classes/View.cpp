@@ -22,14 +22,37 @@ void View::handleEvent(const SDL_Event& event) {
         mousePosition.y = event.motion.y;
         mouseVelocity.x = event.motion.xrel;
         mouseVelocity.y = event.motion.yrel;
+        // If hovering system is on, updated which node is being hovered
+        if(_hoveringSystemIsOn) {
+            auto nodeThatIsHoveredNow = getNodeAtMouse();
+            if(nodeThatIsHoveredNow != _nodeThatIsBeingHovered) {
+                // Unhover the previously hovered node if there is one
+                if(_nodeThatIsBeingHovered != nullptr) {
+                    _nodeThatIsBeingHovered->isHovered(false);
+                    _nodeThatIsBeingHovered = nullptr;
+                }
+                // Hover newly hovered node if there is one
+                if(nodeThatIsHoveredNow != nullptr) {
+                    nodeThatIsHoveredNow->isHovered(true);
+                    _nodeThatIsBeingHovered = nodeThatIsHoveredNow;
+                }
+            }
+        }
+        // Do state-specific stuff
         switch(state) {
         case State::Dragging:
-            _nodeThatIsDirectTargetOfDrag->translate(mouseVelocity.x, mouseVelocity.y);
+            // Apply translation to all selected nodes
+            for(size_t i = 0; i < selectedNodes.size(); i++) {
+                selectedNodes[i]->translate(mouseVelocity.x, mouseVelocity.y);
+            }
             redrawRequested = true; // TODO implement partial redraw system
             break;
         }
         break;
     case SDL_MOUSEBUTTONDOWN:
+        // If a node wasn't clicked, clear selected nodes
+        if(getNodeAtMouse() == nullptr) clearSelection();
+        // Do state-specific things
         switch(state) {
         case State::Waiting:
             // TODO make sure the left button is clicked
@@ -38,7 +61,9 @@ void View::handleEvent(const SDL_Event& event) {
                 // TODO start selecting
             }
             else {
-                switchToStateDragging(nodeThatWasClicked, shiftIsPressed);
+                SDL_Keymod modState = SDL_GetModState();
+                switchToStateDragging(nodeThatWasClicked, modState & KMOD_SHIFT);
+                std::cout << "Number of selected nodes: " << selectedNodes.size() << '\n';
             }
             break;
         }
@@ -74,6 +99,29 @@ void View::_render(SDL_Renderer* renderer) {
     overlapRects.clear();
 }
 
+void View::hoveringSystemOn(bool isIt) {
+    _hoveringSystemIsOn = isIt;
+    if(_hoveringSystemIsOn) {
+        // Clear last hovered node just in case
+        if(_nodeThatIsBeingHovered != nullptr) {
+            _nodeThatIsBeingHovered->isHovered(false);
+            _nodeThatIsBeingHovered = nullptr;
+        }
+        // Set new hovered node if there is one
+        _nodeThatIsBeingHovered = getNodeAtMouse();
+        if(_nodeThatIsBeingHovered != nullptr) {
+            _nodeThatIsBeingHovered->isHovered(true);
+        }
+    }
+    else {
+        // Stop hovering currently hovered node if there is one
+        if(_nodeThatIsBeingHovered != nullptr) {
+            _nodeThatIsBeingHovered->isHovered(false);
+            _nodeThatIsBeingHovered = nullptr;
+        }
+    }
+}
+
 void View::switchToStateWaiting() {
     resetState();
     state = State::Waiting;
@@ -84,17 +132,17 @@ void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shi
     resetState();
     state = State::Dragging;
     SDL_Log("State: Dragging");
+    hoveringSystemOn(false);
     // If you try to drag a node that's not selected, other nodes will get deselected
-    if(!nodeToBeDragged->isSelected) {
-        // TODO add isSelected to Node class
-        // TODO if(!shiftButtonIsPressed) clearSelection();
+    if(!nodeToBeDragged->isSelected()) {
+        if(!shiftButtonIsPressed) clearSelection();
     }
     // Otherwise, the user might be trying to interact with the node
     else {
         _userMightBeTryingToInteractWithNode = true;
     }
     // Add current node to the selection, or at least make sure it's selected
-    // TODO addNodeToSelection(nodeToBeDragged);
+    addNodeToSelection(nodeToBeDragged);
     // Record this node
     _nodeThatIsDirectTargetOfDrag = nodeToBeDragged;
     // Bring this node to the front
@@ -113,6 +161,7 @@ void View::resetState() {
     case State::Dragging:
         _nodeThatIsDirectTargetOfDrag = nullptr;
         _userMightBeTryingToInteractWithNode = false;
+        hoveringSystemOn(true);
         break;
     /*
     case State::Selecting:
@@ -204,4 +253,18 @@ void View::moveNodeToFront(std::shared_ptr<Node> node) {
         }
     }
     SDL_Log("Error: node being moved to front isn't in node list.");
+}
+
+void View::clearSelection() {
+    for(size_t i = 0; i < selectedNodes.size(); i++) {
+        selectedNodes[i]->isSelected(false);
+    }
+    selectedNodes.clear();
+    // TODO _nodeThatWasMostRecentlySelected = null;
+}
+
+void View::addNodeToSelection(std::shared_ptr<Node> node) {
+    if(!node->isSelected()) selectedNodes.push_back(node);
+    node->isSelected(true);
+    // TODO _nodeThatWasMostRecentlySelected = node;
 }
