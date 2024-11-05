@@ -14,6 +14,9 @@ View::View(SDL_Renderer* renderer)
 void View::handleEvent(const SDL_Event& event) {
     // Determine what type of event it is
     switch(event.type) {
+    case SDL_TEXTINPUT:
+        SDL_Log("Unhandled TextInputEvent");
+        break;
     case SDL_MOUSEMOTION:
         mousePosition.x = event.motion.x;
         mousePosition.y = event.motion.y;
