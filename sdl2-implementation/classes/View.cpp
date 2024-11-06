@@ -2,13 +2,31 @@
 #include "TextNode.h"
 #include <iostream>
 
-View::View(SDL_Renderer* renderer)
+View::View(SDL_Renderer* renderer, SDL_Window* window)
     : Renderable(renderer)
+    , window(window)
 {
     std::string text = "Hello World\nThis is a test.\nAnother line that's actually really long.\nBye.";
     nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));
     nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));
     nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer, text)));
+}
+
+void View::checkWhatNeedsToBeRedrawn() {
+    // Check all nodes to see if anything needs to be redrawn
+    overlapRects.clear();
+    for(size_t i = 0; i < nodes.size(); i++) {
+        // Check if the node wants nodes underneath it to be redrawn
+        SDL_Rect rect = nodes[i]->getOverlapRect();
+        if(!SDL_RectEmpty(&rect)) {
+            redrawRequested = true;
+            overlapRects.push_back(rect);
+        }
+        // Check if the node itself requests to be redrawn
+        if(!redrawRequested && (nodes[i]->requestsToBeRedrawn() || nodes[i]->hasMoved())) {
+            redrawRequested = true;
+        }
+    }
 }
 
 void View::handleEvent(const SDL_Event& event) {
@@ -67,7 +85,6 @@ void View::handleEvent(const SDL_Event& event) {
             for(size_t i = 0; i < selectedNodes.size(); i++) {
                 selectedNodes[i]->translate(mouseVelocity.x, mouseVelocity.y);
             }
-            redrawRequested = true; // TODO implement partial redraw system
             break;
         case State::Interacting:
             // Pass the event on to the node
@@ -134,6 +151,7 @@ void View::handleEvent(const SDL_Event& event) {
         break;
     case SDL_WINDOWEVENT:
         redrawRequested = true;
+        fullRedrawNeeded = true;
         // TODO only request redraw when actually needed
         break;
     default:
@@ -143,19 +161,50 @@ void View::handleEvent(const SDL_Event& event) {
 }
 
 void View::_render(SDL_Renderer* renderer) {
-    // First Pass: check what needs to be redrawn
+    // If full redraw is needed, redraw everything
+    if(fullRedrawNeeded) {
+        fullRedrawNeeded = false;
+        // Draw background
+        SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
+        SDL_Rect screenRect;
+        screenRect.x = 0;
+        screenRect.y = 0;
+        SDL_GetWindowSize(window, &screenRect.w, &screenRect.h);
+        SDL_RenderFillRect(renderer, &screenRect);
+        // Render nodes
+        for(size_t i = 0; i < nodes.size(); i++) {
+            // Reset node's requested overlap rect
+            SDL_Rect rect = nodes[i]->getOverlapRect();
+            // Redraw node
+            drawChild(*nodes[i]);
+        }
+        return;
+    }
 
-    // Second Pass: draw stuff
-    // Draw background // TODO: only draw background if we actually want to reset everything
+    // Otherwise, do a more efficient redraw:
+
+    // Draw background behind overlap rects
     SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
-    SDL_RenderClear(renderer);
-    // Render arrows TODO
+    for(size_t i = 0; i < overlapRects.size(); i++) {
+        SDL_RenderFillRect(renderer, &overlapRects[i]);
+    }
     // Render nodes
     for(size_t i = 0; i < nodes.size(); i++) {
-        drawChild(*nodes[i]);
+        // Redraw node if it needs to
+        if(nodes[i]->requestsToBeRedrawn() || nodes[i]->hasMoved()) {
+            drawChild(*nodes[i]);
+            overlapRects.push_back(nodes[i]->getRect());
+        }
+        // Otherwise, only redraw sections of it that overlap other nodes that
+        // returned an overlap rect
+        else {
+            SDL_Rect nodeRect = nodes[i]->getRect();
+            for(size_t j = 0; j < overlapRects.size(); j++) {
+                // If the node overlapps the rect, draw it again
+                drawChildIntoClipRect(*nodes[i], overlapRects[j]);
+            }
+        }
     }
-    // Reset overlap rects
-    overlapRects.clear();
 }
 
 void View::hoveringSystemOn(bool isIt) {

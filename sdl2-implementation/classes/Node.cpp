@@ -1,6 +1,7 @@
 #include "Node.h"
 
 void Node::translate(int dx, int dy) {
+    createOverlapRect();
     auto rect = getRect();
     rect.x += dx;
     rect.y += dy;
@@ -25,6 +26,14 @@ void Node::isHovered(bool isIt) {
     _hoveredStatusHasChanged(_isHovered);
 }
 
+SDL_Rect Node::getOverlapRect() {
+    if(hasOverlapRect) {
+        hasOverlapRect = false;
+        return overlapRect;
+    }
+    return {0,0,0,0};
+}
+
 void Node::_selectedStatusHasChanged(bool isItSelected) {
     // Do nothing
     if(isItSelected) {
@@ -42,5 +51,12 @@ void Node::_hoveredStatusHasChanged(bool isItHovered) {
     }
     else {
         SDL_Log("Node was unhovered, but isn't showing it graphically.");
+    }
+}
+
+void Node::createOverlapRect() {
+    if(!hasOverlapRect) {
+        overlapRect = getRect();
+        hasOverlapRect = true;
     }
 }

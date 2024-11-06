@@ -1,5 +1,5 @@
 #include "Renderable.h"
-
+#include <iostream>
 
 Renderable::Renderable(SDL_Renderer* renderer)
     : renderer(renderer)
@@ -22,13 +22,20 @@ SDL_Rect Renderable::getRect() {
         return rect;
     }
     // NULL texture: render to screen directly
+    // TODO get actual size of window instead of screen
     SDL_Rect rect;
+    rect.x = 0;
+    rect.y = 0;
     SDL_GetRendererOutputSize(renderer, &rect.w, &rect.h);
     return rect;
 }
 
 bool Renderable::requestsToBeRedrawn() {
     return redrawRequested;
+}
+
+bool Renderable::hasMoved() {
+    return moved;
 }
 
 void Renderable::render() {
@@ -64,38 +71,7 @@ void Renderable::drawChildIntoClipRect(Renderable& child, SDL_Rect const& clipRe
     SDL_Rect childRect = child.getRect();
     // Find destination rect
     SDL_Rect destination;
-    if(childRect.x < clipRect.x) {
-        destination.x = clipRect.x;
-        destination.w = childRect.x + childRect.w - destination.x;
-        if(destination.w > clipRect.w) {
-            destination.w = clipRect.w;
-        }
-        else if(destination.w < 0) return;
-    }
-    else if(childRect.x >= clipRect.x + clipRect.w) return;
-    else {
-        destination.x = childRect.x;
-        destination.w = childRect.w;
-        if(destination.x + destination.w > clipRect.x + clipRect.w) {
-            destination.w = clipRect.w - (destination.x - clipRect.x);
-        }
-    }
-    if(childRect.y < clipRect.y) {
-        destination.y = clipRect.y;
-        destination.h = childRect.y + childRect.h - destination.y;
-        if(destination.h > clipRect.h) {
-            destination.h = clipRect.h;
-        }
-        else if(destination.h < 0) return;
-    }
-    else if(childRect.y >= clipRect.y + clipRect.h) return;
-    else {
-        destination.y = childRect.y;
-        destination.h = childRect.h;
-        if(destination.y + destination.h > clipRect.y + clipRect.h) {
-            destination.h = clipRect.h - (destination.y - clipRect.y);
-        }
-    }
+    if(!SDL_IntersectRect(&clipRect, &childRect, &destination)) return;
     // Find source rect
     SDL_Rect source;
     source.x = destination.x - childRect.x;
@@ -105,7 +81,6 @@ void Renderable::drawChildIntoClipRect(Renderable& child, SDL_Rect const& clipRe
     // Draw from source to destination
     SDL_SetRenderTarget(renderer, currentTexture);
     SDL_RenderCopy(renderer, child.currentTexture, &source, &destination);
-    child.moved = false;
 }
 
 void Renderable::resizeTexture(int width, int height) {
@@ -136,10 +111,6 @@ void Renderable::replaceTexture(SDL_Texture* texture) {
     if(currentTexture)
         SDL_DestroyTexture(currentTexture);
     currentTexture = texture;
-}
-
-bool Renderable::hasMoved() {
-    return moved;
 }
 
 SDL_Point Renderable::getGlobalPosition() {

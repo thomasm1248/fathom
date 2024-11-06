@@ -9,6 +9,7 @@ public:
     virtual ~Renderable();
     SDL_Rect getRect();
     bool requestsToBeRedrawn();
+    bool hasMoved();
     void render();
     // No copying
     Renderable(Renderable const& other) = delete;
@@ -23,7 +24,6 @@ protected:
     void resizeTexture(int width, int height);
     void moveTexture(int x, int y);
     void replaceTexture(SDL_Texture* texture);
-    bool hasMoved();
     virtual void _render(SDL_Renderer* renderer) = 0; // implemented by derived class
     SDL_Point getGlobalPosition();
 

@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     TTF_Init();
 
     // Create default view
-    View* currentView = new View(renderer);
+    View* currentView = new View(renderer, window);
 
     // Main loop
     while(true){
@@ -46,6 +46,9 @@ int main(int argc, char** argv) {
             // Send events to View
             currentView->handleEvent(event);
         }
+
+        // Let View do first pass to see what needs to be drawn
+        currentView->checkWhatNeedsToBeRedrawn();
 
         // Render UI
         if(currentView->requestsToBeRedrawn())

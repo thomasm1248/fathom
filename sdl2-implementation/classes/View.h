@@ -10,10 +10,12 @@
 class View : public Renderable
 {
 public:
-    View(SDL_Renderer* renderer);
+    View(SDL_Renderer* renderer, SDL_Window* window);
     void handleEvent(const SDL_Event& event);
+    void checkWhatNeedsToBeRedrawn();
 
 private:
+    SDL_Window* window;
     enum class State {
         Waiting,
         //Panning, TODO
@@ -33,6 +35,7 @@ private:
     std::vector<std::shared_ptr<Node>> selectedNodes;
     //std::vector<Arrow> arrows;
     std::vector<SDL_Rect> overlapRects;
+    bool fullRedrawNeeded = true;
 
     void _render(SDL_Renderer* renderer);
 
