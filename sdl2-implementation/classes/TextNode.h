@@ -8,6 +8,7 @@ class TextNode : public Node
 {
 public:
     TextNode(SDL_Renderer* renderer, std::string text);
+    TextNode(SDL_Renderer* renderer);
     ~TextNode();
     void startInteraction();
     void stopInteraction();

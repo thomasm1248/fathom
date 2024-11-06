@@ -1,21 +1,11 @@
 #include "TextLine.h"
 #include <iostream>
 
-TextLine::TextLine(SDL_Renderer* renderer, TTF_Font* font, std::string text, const SDL_Point& location)
-    : text(text)
-    , font(font)
+TextLine::TextLine(SDL_Renderer* renderer, TTF_Font* font, const SDL_Point& location)
+    : font(font)
     , Renderable(renderer)
 {
-    SDL_Color textColor{255, 255, 255, 255};
-    auto surfacePtr = TTF_RenderUTF8_Blended(font, text.c_str(), textColor);
-    if(!surfacePtr) {
-        SDL_Log("Error: unable to create text surface.");
-        return;
-    }
-    initializeTexture(surfacePtr->w, surfacePtr->h);
     moveTexture(location.x, location.y);
-    surface = std::shared_ptr<SDL_Surface>(surfacePtr, SDL_FreeSurface);
-    surfacePtr = NULL;
 }
 
 int TextLine::numCharacters() {
@@ -36,7 +26,40 @@ int TextLine::xPosAtIndex(int index) {
     return width;
 }
 
+std::string TextLine::insertText(std::string newText, int index, int maxWidth) {
+    std::cout <<"insert:\n";
+    std::cout <<'"'<<text<<"\"\n";
+    std::cout <<'"'<<newText<<"\"\n";
+    text.insert(index, newText);
+    std::cout <<'"'<<text<<"\"\n";
+    int finalWidth;
+    int finalCharacters;
+    if(TTF_MeasureUTF8(font, text.c_str(), maxWidth, &finalWidth, &finalCharacters)) {
+        SDL_Log("Error: failed to measure text in TextLine::insertText");
+        return "";
+    }
+    std::string leftoverText = text.substr(finalCharacters, text.size()-finalCharacters);
+    std::cout <<'"'<<leftoverText<<"\"\n";
+    text = text.substr(0, finalCharacters);
+    std::cout <<'"'<<text<<"\"\n";
+    redrawRequested = true;
+    return leftoverText;
+}
+
 void TextLine::_render(SDL_Renderer* renderer) {
+    // Draw nothing if the string is empty
+    if(text.size() == 0) {
+        replaceTexture(NULL); // erase texture
+        return;
+    }
+    // Generate surface
+    SDL_Color textColor{255, 255, 255, 255};
+    auto surface = TTF_RenderUTF8_Blended(font, text.c_str(), textColor);
+    if(!surface) {
+        SDL_Log("Error: unable to create text surface.");
+        return;
+    }
+    // Generate texture
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, &(*surface));
     if(!texture) {
         SDL_Log("Error: unable to create texture from surface.");
@@ -44,4 +67,6 @@ void TextLine::_render(SDL_Renderer* renderer) {
     }
     replaceTexture(texture);
     texture = NULL;
+    // Free resources
+    SDL_FreeSurface(surface);
 }

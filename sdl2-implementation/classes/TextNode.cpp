@@ -24,6 +24,26 @@ TextNode::TextNode(SDL_Renderer* renderer, std::string text)
     textBox = std::make_shared<TextBox>(renderer, font, 98, text);
 }
 
+TextNode::TextNode(SDL_Renderer* renderer)
+    : Node(renderer)
+{
+    numberOfTextNodes++;
+    initializeTexture(100, 100);
+
+    // Initialize font if not done already
+    if(!font) {
+        font = TTF_OpenFont("AovelSansRounded-rdDL.ttf", 14);
+        if(!font) {
+            SDL_Log("Error: unable to open font.");
+            std::cout << TTF_GetError() << '\n';
+            return;
+        }
+    }
+    
+    // Initialize textbox
+    textBox = std::make_shared<TextBox>(renderer, font, 98);
+}
+
 TextNode::~TextNode() {
     numberOfTextNodes--;
     if(numberOfTextNodes == 0) {

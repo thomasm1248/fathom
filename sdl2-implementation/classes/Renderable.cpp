@@ -100,11 +100,9 @@ void Renderable::initializeTexture(int width, int height) {
 }
 
 void Renderable::moveTexture(int x, int y) {
-    if(currentTexture) {
-        position.x = x;
-        position.y = y;
-        moved = true;
-    }
+    position.x = x;
+    position.y = y;
+    moved = true;
 }
 
 void Renderable::replaceTexture(SDL_Texture* texture) {
