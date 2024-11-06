@@ -27,6 +27,37 @@ TextBox::TextBox(SDL_Renderer* renderer, TTF_Font* font, int width, std::string 
     moveTexture(1, 1);
 }
 
+void TextBox::handleEvent(const SDL_Event& event) {
+    switch(event.type) {
+    case SDL_MOUSEMOTION:
+        SDL_Log("TextBox: mouse moved");
+        break;
+    case SDL_MOUSEBUTTONDOWN:
+        SDL_Log("TextBox: mouse button down");
+        break;
+    case SDL_MOUSEBUTTONUP:
+        SDL_Log("TextBox: mouse button up");
+        break;
+    case SDL_KEYDOWN:
+        SDL_Log("TextBox: key down");
+        break;
+    case SDL_KEYUP:
+        SDL_Log("TextBox: key up");
+        break;
+    case SDL_TEXTINPUT:
+        SDL_Log("TextBox: text input");
+        break;
+    }
+}
+
+void TextBox::startEditing() {
+    // TODO switchToStateEditing();
+}
+
+void TextBox::stopEditing() {
+    switchToStateDisplaying();
+}
+
 void TextBox::_render(SDL_Renderer* renderer) {
     auto rect = getRect();
     rect.x = 0;
@@ -36,4 +67,19 @@ void TextBox::_render(SDL_Renderer* renderer) {
     for(size_t i = 0; i < lineTextures.size(); i++) {
         drawChild(*lineTextures[i]);
     }
+}
+
+void TextBox::resetState() {
+    switch(state) {
+    case State::Displaying:
+        break;
+    }
+}
+
+void TextBox::switchToStateDisplaying() {
+    resetState();
+    state = State::Displaying;
+    SDL_Log("TextBox State: Displaying");
+    // This will probably change how this TextBox looks
+    redrawRequested = true;
 }

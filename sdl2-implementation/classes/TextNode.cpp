@@ -34,13 +34,18 @@ TextNode::~TextNode() {
 
 void TextNode::startInteraction() {
     SDL_Log("Started interaction");
+    interacting = true;
+    textBox->startEditing();
 }
 
 void TextNode::stopInteraction() {
     SDL_Log("Stopped interaction");
+    interacting = false;
+    textBox->stopEditing();
 }
 
 void TextNode::handleEvent(const SDL_Event& event) {
+    textBox->handleEvent(event);
 }
 
 void TextNode::_render(SDL_Renderer* renderer) {

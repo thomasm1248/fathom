@@ -25,10 +25,12 @@ protected:
     void replaceTexture(SDL_Texture* texture);
     bool hasMoved();
     virtual void _render(SDL_Renderer* renderer) = 0; // implemented by derived class
+    SDL_Point getGlobalPosition();
 
 private:
     SDL_Renderer* renderer;
     SDL_Texture* currentTexture = NULL;
     SDL_Point position;
+    Renderable* parent = nullptr;
     bool moved = true;
 };

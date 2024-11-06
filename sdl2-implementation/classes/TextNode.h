@@ -17,6 +17,7 @@ private:
     static TTF_Font* font;
     static int numberOfTextNodes;
     std::shared_ptr<TextBox> textBox;
+    bool interacting = false;
 
     void _render(SDL_Renderer* renderer);
 };

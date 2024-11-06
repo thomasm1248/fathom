@@ -40,6 +40,8 @@ void Renderable::render() {
 }
 
 void Renderable::drawChild(Renderable& child) {
+    // Set self as the child's parent
+    child.parent = this;
     // Make sure child is up-to-date
     child.render();
     // Find out where to draw the texture
@@ -54,6 +56,8 @@ void Renderable::drawChild(Renderable& child) {
 }
 
 void Renderable::drawChildIntoClipRect(Renderable& child, SDL_Rect const& clipRect) {
+    // Set self as the child's parent
+    child.parent = this;
     // Make sure child is up-to-date
     child.render();
     // Get child rect
@@ -136,4 +140,15 @@ void Renderable::replaceTexture(SDL_Texture* texture) {
 
 bool Renderable::hasMoved() {
     return moved;
+}
+
+SDL_Point Renderable::getGlobalPosition() {
+    SDL_Point globalPosition{0,0};
+    Renderable* current = this;
+    while(current != nullptr) {
+        globalPosition.x += current->position.x;
+        globalPosition.y += current->position.y;
+        current = current->parent;
+    }
+    return globalPosition;
 }
