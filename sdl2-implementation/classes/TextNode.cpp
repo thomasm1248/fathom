@@ -32,6 +32,17 @@ TextNode::~TextNode() {
     }
 }
 
+void TextNode::startInteraction() {
+    SDL_Log("Started interaction");
+}
+
+void TextNode::stopInteraction() {
+    SDL_Log("Stopped interaction");
+}
+
+void TextNode::handleEvent(const SDL_Event& event) {
+}
+
 void TextNode::_render(SDL_Renderer* renderer) {
     SDL_Rect rect = getRect();
     rect.x = 0;

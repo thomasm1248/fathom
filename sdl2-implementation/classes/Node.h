@@ -12,6 +12,9 @@ public:
     void isSelected(bool isIt);
     bool isHovered();
     void isHovered(bool isIt);
+    virtual void startInteraction() {} // override this
+    virtual void stopInteraction() {} // override this
+    virtual void handleEvent(const SDL_Event& event) {} // override this
 
 protected:
     virtual void _selectedStatusHasChanged(bool isItSelected); // override this

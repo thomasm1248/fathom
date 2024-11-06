@@ -56,6 +56,10 @@ private:
     bool _userMightBeTryingToInteractWithNode;
     std::shared_ptr<Node> _nodeThatIsDirectTargetOfDrag;
 
+    // Interacting
+    void switchToStateInteracting(std::shared_ptr<Node> nodeThatWasClickedOn);
+    std::shared_ptr<Node> _nodeThatIsBeingInteractedWith;
+
     /*
     Node* _nodeThatWasMostRecentlySelected;
 
@@ -64,8 +68,6 @@ private:
     Vector2 _mousePositionAtStartOfSelection;
     void switchToStateSelecting();
 
-    Node* _nodeThatIsBeingInteractedWith;
-    void switchToStateInteracting();
 
     //Arrow* _arrowThatIsBeingCreated TODO
     Node* _nodeThatArrowMightConnectTo;

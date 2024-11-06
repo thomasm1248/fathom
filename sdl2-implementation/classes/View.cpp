@@ -14,8 +14,29 @@ View::View(SDL_Renderer* renderer)
 void View::handleEvent(const SDL_Event& event) {
     // Determine what type of event it is
     switch(event.type) {
+    case SDL_KEYDOWN:
+        switch(state) {
+        case State::Interacting:
+            // Pass the event on to the node
+            _nodeThatIsBeingInteractedWith->handleEvent(event);
+            break;
+        }
+        break;
+    case SDL_KEYUP:
+        switch(state) {
+        case State::Interacting:
+            // Pass the event on to the node
+            _nodeThatIsBeingInteractedWith->handleEvent(event);
+            break;
+        }
+        break;
     case SDL_TEXTINPUT:
-        SDL_Log("Unhandled TextInputEvent");
+        switch(state) {
+        case State::Interacting:
+            // Pass the event on to the node
+            _nodeThatIsBeingInteractedWith->handleEvent(event);
+            break;
+        }
         break;
     case SDL_MOUSEMOTION:
         mousePosition.x = event.motion.x;
@@ -41,11 +62,16 @@ void View::handleEvent(const SDL_Event& event) {
         // Do state-specific stuff
         switch(state) {
         case State::Dragging:
+            _userMightBeTryingToInteractWithNode = false;
             // Apply translation to all selected nodes
             for(size_t i = 0; i < selectedNodes.size(); i++) {
                 selectedNodes[i]->translate(mouseVelocity.x, mouseVelocity.y);
             }
             redrawRequested = true; // TODO implement partial redraw system
+            break;
+        case State::Interacting:
+            // Pass the event on to the node
+            _nodeThatIsBeingInteractedWith->handleEvent(event);
             break;
         }
         break;
@@ -55,15 +81,35 @@ void View::handleEvent(const SDL_Event& event) {
         // Do state-specific things
         switch(state) {
         case State::Waiting:
-            // TODO make sure the left button is clicked
-            auto nodeThatWasClicked = getNodeAtMouse();
-            if(nodeThatWasClicked == nullptr) {
-                // TODO start selecting
+            if(event.button.button == SDL_BUTTON_LEFT) {
+                auto nodeThatWasClicked = getNodeAtMouse();
+                if(nodeThatWasClicked == nullptr) {
+                    // TODO start selecting
+                }
+                else {
+                    SDL_Keymod modState = SDL_GetModState();
+                    switchToStateDragging(nodeThatWasClicked, modState & KMOD_SHIFT);
+                }
             }
-            else {
-                SDL_Keymod modState = SDL_GetModState();
-                switchToStateDragging(nodeThatWasClicked, modState & KMOD_SHIFT);
-                std::cout << "Number of selected nodes: " << selectedNodes.size() << '\n';
+            break;
+        case State::Interacting:
+            if(event.button.button == SDL_BUTTON_LEFT) {
+                auto nodeThatWasClicked = getNodeAtMouse();
+                if(nodeThatWasClicked == nullptr) {
+                    // TODO start selecting
+                    switchToStateWaiting();
+                }
+                else if(nodeThatWasClicked == _nodeThatIsBeingInteractedWith) {
+                    // We're interacting with this node. Let it handle the event
+                    _nodeThatIsBeingInteractedWith->handleEvent(event);
+                }
+                else {
+                    // We clicked on another node, start dragging it
+                    SDL_Keymod modState = SDL_GetModState();
+                    switchToStateDragging(nodeThatWasClicked, modState & KMOD_SHIFT);
+                }
+            }
+            else if(event.button.button == SDL_BUTTON_RIGHT) {
             }
             break;
         }
@@ -71,8 +117,18 @@ void View::handleEvent(const SDL_Event& event) {
     case SDL_MOUSEBUTTONUP:
         switch(state) {
         case State::Dragging:
-            // TODO make sure the left button is being released
-            switchToStateWaiting();
+            if(event.button.button == SDL_BUTTON_LEFT) {
+                if(_userMightBeTryingToInteractWithNode) {
+                    switchToStateInteracting(_nodeThatIsDirectTargetOfDrag);
+                }
+                else {
+                    switchToStateWaiting();
+                }
+            }
+            break;
+        case State::Interacting:
+            // Pass event on to the node
+            _nodeThatIsBeingInteractedWith->handleEvent(event);
             break;
         }
         break;
@@ -150,6 +206,16 @@ void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shi
     redrawRequested = true;
 }
 
+void View::switchToStateInteracting(std::shared_ptr<Node> nodeThatWasClickedOn) {
+    resetState();
+    state = State::Interacting;
+    SDL_Log("State: Interacting");
+    // TODO turnOnArrowHandleSystem();
+    // Start interacting with node
+    _nodeThatIsBeingInteractedWith = nodeThatWasClickedOn;
+    _nodeThatIsBeingInteractedWith->startInteraction();
+}
+
 void View::resetState() {
     switch(state) {
     case State::Waiting:
@@ -163,18 +229,20 @@ void View::resetState() {
         _userMightBeTryingToInteractWithNode = false;
         hoveringSystemOn(true);
         break;
+    case State::Interacting:
+        /* TODO delete empty label nodes
+        if(isLabelNode(_nodeThatIsBeingInteractedWith) && _nodeThatIsBeingInteractedWith.isEmpty()) {
+            deleteNode(_nodeThatIsBeingInteractedWith);
+        }
+        */
+        _nodeThatIsBeingInteractedWith->stopInteraction();
+        _nodeThatIsBeingInteractedWith = nullptr;
+        // TODO turnOffArrowHandleSystem();
+        break;
     /*
     case State::Selecting:
         //selectionBox.style.visibility = "collapse"; TODO
         _mousePositionAtStartOfSelection = nullptr;
-        break;
-    case State::Interacting:
-        if(isLabelNode(_nodeThatIsBeingInteractedWith) && _nodeThatIsBeingInteractedWith.isEmpty()) { TODO
-            deleteNode(_nodeThatIsBeingInteractedWith);
-        } <end comment>
-        //_nodeThatIsBeingInteractedWith.stopInteraction(); TODO
-        _nodeThatIsBeingInteractedWith = nullptr;
-        turnOffArrowHandleSystem();
         break;
     case State::NewArrow:
         _arrowThatIsBeingCreated = nullptr;
@@ -260,7 +328,7 @@ void View::clearSelection() {
         selectedNodes[i]->isSelected(false);
     }
     selectedNodes.clear();
-    // TODO _nodeThatWasMostRecentlySelected = null;
+    // TODO _nodeThatWasMostRecentlySelected = nullptr;
 }
 
 void View::addNodeToSelection(std::shared_ptr<Node> node) {

@@ -9,6 +9,9 @@ class TextNode : public Node
 public:
     TextNode(SDL_Renderer* renderer, std::string text);
     ~TextNode();
+    void startInteraction();
+    void stopInteraction();
+    void handleEvent(const SDL_Event& event);
 
 private:
     static TTF_Font* font;
