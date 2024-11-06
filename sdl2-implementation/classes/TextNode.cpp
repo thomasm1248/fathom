@@ -36,16 +36,19 @@ void TextNode::startInteraction() {
     SDL_Log("Started interaction");
     interacting = true;
     textBox->startEditing();
+    redrawRequested = true;
 }
 
 void TextNode::stopInteraction() {
     SDL_Log("Stopped interaction");
     interacting = false;
     textBox->stopEditing();
+    redrawRequested = true;
 }
 
 void TextNode::handleEvent(const SDL_Event& event) {
     textBox->handleEvent(event);
+    redrawRequested = true; // TODO be more efficient
 }
 
 void TextNode::_render(SDL_Renderer* renderer) {

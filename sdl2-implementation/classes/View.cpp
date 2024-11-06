@@ -143,6 +143,9 @@ void View::handleEvent(const SDL_Event& event) {
 }
 
 void View::_render(SDL_Renderer* renderer) {
+    // First Pass: check what needs to be redrawn
+
+    // Second Pass: draw stuff
     // Draw background // TODO: only draw background if we actually want to reset everything
     SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
     SDL_RenderClear(renderer);

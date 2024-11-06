@@ -37,4 +37,9 @@ private:
 
     // Displaying
     void switchToStateDisplaying();
+
+    // Editing
+    void switchToStateEditing();
+    int _lineIndexOfCursor;
+    int _characterIndexOfCursor;
 };

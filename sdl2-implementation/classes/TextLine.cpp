@@ -19,6 +19,24 @@ TextLine::TextLine(SDL_Renderer* renderer, TTF_Font* font, std::string text, con
     surfacePtr = NULL;
 }
 
+int TextLine::numCharacters() {
+    return text.size();
+}
+
+int TextLine::indexAtXPos(int x) {
+    SDL_Log("Error: TextLine::indexAtXPos is not defined");
+    return 0;
+}
+
+int TextLine::xPosAtIndex(int index) {
+    std::string textUpToIndex = text.substr(0, index);
+    int width = 0;
+    if(TTF_MeasureUTF8(font, text.c_str(), std::numeric_limits<int>::max(), &width, NULL) == -1) {
+        SDL_Log("Error: unable to measure text in TextLine::xPosAtIndex");
+    }
+    return width;
+}
+
 void TextLine::_render(SDL_Renderer* renderer) {
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, &(*surface));
     if(!texture) {
