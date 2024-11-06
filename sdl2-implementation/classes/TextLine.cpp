@@ -14,7 +14,6 @@ TextLine::TextLine(SDL_Renderer* renderer, TTF_Font* font, std::string text, con
     }
     initializeTexture(surfacePtr->w, surfacePtr->h);
     moveTexture(location.x, location.y);
-    std::cout << location.x << ", " << location.y << '\n';
     surface = std::shared_ptr<SDL_Surface>(surfacePtr, SDL_FreeSurface);
     surfacePtr = NULL;
 }

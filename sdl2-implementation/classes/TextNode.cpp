@@ -48,7 +48,7 @@ void TextNode::stopInteraction() {
 
 void TextNode::handleEvent(const SDL_Event& event) {
     textBox->handleEvent(event);
-    redrawRequested = true; // TODO be more efficient
+    if(textBox->requestsToBeRedrawn()) redrawRequested = true;
 }
 
 void TextNode::_render(SDL_Renderer* renderer) {

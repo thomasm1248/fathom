@@ -13,6 +13,7 @@ bool Node::isSelected() {
 }
 
 void Node::isSelected(bool isIt) {
+    createOverlapRect();
     _isSelected = isIt;
     _selectedStatusHasChanged(_isSelected);
 }

@@ -80,8 +80,6 @@ void TextBox::_render(SDL_Renderer* renderer) {
         cursorRect.h = 14;
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &cursorRect);
-        SDL_Log("Cursor has been drawn");
-        std::cout << cursorRect.x << ' ' << cursorRect.y << '\n';
     }
 }
 
