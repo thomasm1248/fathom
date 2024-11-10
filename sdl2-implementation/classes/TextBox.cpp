@@ -44,7 +44,7 @@ void TextBox::handleEvent(const SDL_Event& event) {
             SDL_Log("TextBox: mouse button up");
             break;
         case SDL_KEYDOWN:
-            SDL_Log("TextBox: key down");
+            handleKeypress(event.key.keysym);
             break;
         case SDL_KEYUP:
             SDL_Log("TextBox: key up");
@@ -91,40 +91,140 @@ void TextBox::_render(SDL_Renderer* renderer) {
 }
 
 void TextBox::insertTextAtCursor(std::string text) {
-    // TODO implement word-wrap
+    // TODO implement word-wrap and newlines
     // Insert text into a line, and add the overflow to the next line...
     int insertIndex = _characterIndexOfCursor; // insert at current cursor
+    _characterIndexOfCursor += text.size();
+    int lastLineWrapped;
+    int lastLineWrappedEndsInNewline = false;
     for(size_t i = _lineIndexOfCursor; i < lineTextures.size(); i++) {
-        _characterIndexOfCursor += text.size();
+        lastLineWrapped = i;
+        // Check if this line ends with a newline
+        bool thisLineEndsWithNewline = !lineTextures[i]->wrapped;
+        // Insert the text, taking the extra off the end
         text = lineTextures[i]->insertText(text, insertIndex, width - margin*2);
-        insertIndex = 0; // insert at the beggining of all future lines instead
+        // Insert at the beggining of all future lines instead
+        insertIndex = 0;
+        // Update the cursor position
         if(_characterIndexOfCursor > lineTextures[i]->numCharacters()) {
             // Move cursor to next line
             _lineIndexOfCursor++;
             _characterIndexOfCursor -= lineTextures[i]->numCharacters();
         }
-        if(text.size() == 0) break;
+        // If this line didn't need to be wrapped, then we're done
+        if(text.size() == 0) {
+            redrawRequested = true;
+            return;
+        }
+        // If this line ends with newline, stop wrapping to following lines
+        else if(thisLineEndsWithNewline) {
+            lastLineWrappedEndsInNewline = true;
+            break;
+        }
     }
+    /* If we've reached this point then one of the following are true:
+        * New lines need to be created at the end of the textbox to
+          accommodate the remaining text
+        * New lines need to be created to accommodate the remaining
+          text, and the new lines need to be inserted in-between
+          existing lines, pushing following lines down
+    */
     // Prepare to create new lines for additional overflow
-    auto lastLineRect = lineTextures[lineTextures.size()-1]->getRect();
+    auto rectOfLastLineWrapped = lineTextures[lastLineWrapped]->getRect();
     SDL_Point newLineLocation;
-    newLineLocation.x = lastLineRect.x;
-    newLineLocation.y = lastLineRect.y;
+    newLineLocation.x = rectOfLastLineWrapped.x;
+    newLineLocation.y = rectOfLastLineWrapped.y;
     int initialNumberOfLines = lineTextures.size();
     // If there's any more overflow, divide it between additional lines
+    int newLinesCreated = 0;
     while(text.size() > 0) {
+        // Calculate position of new line
         newLineLocation.y += fontSize + lineSpacing;
+        // Create new line, and give it as much of the extra text as it will take
         auto newLine = std::make_shared<TextLine>(renderer, font, newLineLocation);
         text = newLine->insertText(text, 0, width - margin*2);
-        lineTextures.push_back(newLine);
+        // Insert the new line into the list
+        lineTextures.insert(lineTextures.begin() + lastLineWrapped + ++newLinesCreated, newLine);
     }
-    // Update redraw status and dimensions
+    // Make sure last created line is recorded as ending in a newline
+    lineTextures[lastLineWrapped + newLinesCreated]->wrapped = !lastLineWrappedEndsInNewline;
+    // If new lines were inserted before existing lines, push following lines down
+    for(int i = lastLineWrapped + 1 + newLinesCreated; i < lineTextures.size(); i++) {
+        // Calculate new location of line
+        newLineLocation.y += fontSize + lineSpacing;
+        // Move line
+        lineTextures[i]->moveLine(newLineLocation);
+    }
+    // Update redraw status and dimensions to accommodate new lines
     redrawRequested = true;
-    if(lineTextures.size() != initialNumberOfLines) {
-        // Number of lines has changed, so the size must as well
-        int height = margin * 2 + (lineTextures.size()-1) * (fontSize+lineSpacing) + fontSize;
-        resizeTexture(width, height);
+    int height = margin * 2 + (lineTextures.size()-1) * (fontSize+lineSpacing) + fontSize;
+    resizeTexture(width, height);
+}
+
+void TextBox::insertNewlineAtCursor() {
+    // Split current line at cursor
+    bool lineWasWrapped = lineTextures[_lineIndexOfCursor]->wrapped;
+    std::string newLineText = lineTextures[_lineIndexOfCursor]->insertNewline(_characterIndexOfCursor);
+    // Update the cursor position
+    _lineIndexOfCursor++;
+    _characterIndexOfCursor = 0;
+    // Handle following lines
+    if(lineWasWrapped) {
+        // If the cursor was on the last line, move extra text to a new line
+        if(_lineIndexOfCursor == lineTextures.size()) {
+            // Calculate position for new line
+            SDL_Point lineLocation;
+            lineLocation.x = margin;
+            lineLocation.y = margin + _lineIndexOfCursor * (fontSize+lineSpacing);
+            // Create a new line for the extra text
+            auto newLine = std::make_shared<TextLine>(renderer, font, lineLocation);
+            lineTextures.push_back(newLine);
+            // Resize texture to accommodate extra line
+            resizeTexture(width, margin*2 + fontSize + (lineTextures.size()-1)*(fontSize+lineSpacing));
+        }
+        // Otherwise, insert extra text into the next line, and reset the cursor
+        // to the beginning
+        else {
+            insertTextAtCursor(newLineText);
+            _characterIndexOfCursor = 0;
+        }
     }
+    else {
+        // Calculate position for new line
+        SDL_Point lineLocation;
+        lineLocation.x = margin;
+        lineLocation.y = margin + _lineIndexOfCursor * (fontSize+lineSpacing);
+        // Create a new line for the extra text
+        auto newLine = std::make_shared<TextLine>(renderer, font, lineLocation);
+        lineTextures.insert(lineTextures.begin() + _lineIndexOfCursor, newLine);
+        // Push the following lines down
+        for(int i = _lineIndexOfCursor + 1; i < lineTextures.size(); i++) {
+            // Calculate new position of line
+            lineLocation.y += fontSize + lineSpacing;
+            // Move line
+            lineTextures[i]->moveLine(lineLocation);
+        }
+        // Resize texture to accommodate extra line
+        resizeTexture(width, margin*2 + fontSize + (lineTextures.size()-1)*(fontSize+lineSpacing));
+    }
+    // Make sure the textbox is re-rendered
+    redrawRequested = true;
+}
+
+void TextBox::handleKeypress(const SDL_Keysym &keysym) {
+    switch(keysym.sym) {
+    case SDLK_BACKSPACE:
+        doBackspaceAction();
+        break;
+    case SDLK_RETURN:
+        insertNewlineAtCursor();
+        break;
+    // TODO arrow keys
+    }
+}
+
+void TextBox::doBackspaceAction() {
+    // TODO
 }
 
 void TextBox::resetState() {

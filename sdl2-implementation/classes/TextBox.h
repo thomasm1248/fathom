@@ -33,6 +33,9 @@ private:
 
     void _render(SDL_Renderer* renderer);
     void insertTextAtCursor(std::string text);
+    void insertNewlineAtCursor();
+    void handleKeypress(const SDL_Keysym &keysym);
+    void doBackspaceAction();
 
     
 

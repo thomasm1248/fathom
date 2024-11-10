@@ -27,23 +27,34 @@ int TextLine::xPosAtIndex(int index) {
 }
 
 std::string TextLine::insertText(std::string newText, int index, int maxWidth) {
-    std::cout <<"insert:\n";
-    std::cout <<'"'<<text<<"\"\n";
-    std::cout <<'"'<<newText<<"\"\n";
     text.insert(index, newText);
-    std::cout <<'"'<<text<<"\"\n";
     int finalWidth;
     int finalCharacters;
     if(TTF_MeasureUTF8(font, text.c_str(), maxWidth, &finalWidth, &finalCharacters)) {
         SDL_Log("Error: failed to measure text in TextLine::insertText");
         return "";
     }
-    std::string leftoverText = text.substr(finalCharacters, text.size()-finalCharacters);
-    std::cout <<'"'<<leftoverText<<"\"\n";
+    std::string leftoverText = text.substr(finalCharacters);
     text = text.substr(0, finalCharacters);
-    std::cout <<'"'<<text<<"\"\n";
     redrawRequested = true;
     return leftoverText;
+}
+
+std::string TextLine::insertNewline(int index) {
+    // Get the text that will be moved to the next line
+    auto extraText = text.substr(index);
+    // Cut off the extra text from this line's text
+    text = text.substr(0, index);
+    // Since a newline has been inserted, this line ends with a newline
+    wrapped = false;
+    // Make sure this line is redrawn
+    redrawRequested = true;
+    // Return the text that will be moved to the next line
+    return extraText;
+}
+
+void TextLine::moveLine(SDL_Point newLocation) {
+    moveTexture(newLocation.x, newLocation.y);
 }
 
 void TextLine::_render(SDL_Renderer* renderer) {

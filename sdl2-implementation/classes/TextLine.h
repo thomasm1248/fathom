@@ -8,13 +8,15 @@
 class TextLine : public Renderable
 {
 public:
-    bool wrapped = false;
+    bool wrapped = true;
 
     TextLine(SDL_Renderer* renderer, TTF_Font* font, const SDL_Point& location);
     int numCharacters();
     int indexAtXPos(int x);
     int xPosAtIndex(int index);
     std::string insertText(std::string newText, int index, int maxWidth);
+    std::string insertNewline(int index);
+    void moveLine(SDL_Point newLocation);
 
 private:
     std::string text;
