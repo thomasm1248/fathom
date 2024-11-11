@@ -20,7 +20,7 @@ int TextLine::indexAtXPos(int x) {
 int TextLine::xPosAtIndex(int index) {
     std::string textUpToIndex = text.substr(0, index);
     int width = 0;
-    if(TTF_MeasureUTF8(font, text.c_str(), std::numeric_limits<int>::max(), &width, NULL) == -1) {
+    if(TTF_MeasureUTF8(font, textUpToIndex.c_str(), std::numeric_limits<int>::max(), &width, NULL) == -1) {
         SDL_Log("Error: unable to measure text in TextLine::xPosAtIndex");
     }
     return width;

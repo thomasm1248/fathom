@@ -52,6 +52,7 @@ void TextBox::handleEvent(const SDL_Event& event) {
         case SDL_TEXTINPUT:
             std::string inputText = std::string(event.text.text);
             insertTextAtCursor(inputText);
+            _rememberedCursorHeight = -1;
             break;
         }
     }
@@ -212,14 +213,87 @@ void TextBox::insertNewlineAtCursor() {
 }
 
 void TextBox::handleKeypress(const SDL_Keysym &keysym) {
+    // Assume that this function was called during editing state
+    if(state != State::Editing) {
+        SDL_Log("Error: TextBox::handleKeypress called outside of Editing state");
+        return;
+    }
     switch(keysym.sym) {
     case SDLK_BACKSPACE:
         doBackspaceAction();
+        _rememberedCursorHeight = -1;
         break;
     case SDLK_RETURN:
         insertNewlineAtCursor();
+        _rememberedCursorHeight = -1;
         break;
-    // TODO arrow keys
+    case SDLK_RIGHT:
+        _characterIndexOfCursor++;
+        if(_characterIndexOfCursor > lineTextures[_lineIndexOfCursor]->numCharacters()) {
+            if(_lineIndexOfCursor < lineTextures.size()-1) {
+                _lineIndexOfCursor++;
+                _characterIndexOfCursor = 0;
+            }
+            else {
+                _characterIndexOfCursor--;
+            }
+        }
+        _rememberedCursorHeight = -1;
+        redrawRequested = true;
+        break;
+    case SDLK_LEFT:
+        _characterIndexOfCursor--;
+        if(_characterIndexOfCursor < 0) {
+            if(_lineIndexOfCursor > 0) {
+                _lineIndexOfCursor--;
+                _characterIndexOfCursor = lineTextures[_lineIndexOfCursor]->numCharacters();
+            }
+            else {
+                _characterIndexOfCursor++;
+            }
+        }
+        _rememberedCursorHeight = -1;
+        redrawRequested = true;
+        break;
+    case SDLK_UP:
+        if(_lineIndexOfCursor == 0) {
+            _characterIndexOfCursor = 0;
+            _rememberedCursorHeight = -1;
+        } else {
+            _lineIndexOfCursor--;
+            if(_rememberedCursorHeight > -1) {
+                _characterIndexOfCursor = _rememberedCursorHeight;
+            }
+            else {
+                _rememberedCursorHeight = _characterIndexOfCursor;
+            }
+            int heightOfCurrentLine = lineTextures[_lineIndexOfCursor]->numCharacters();
+            if(_characterIndexOfCursor > heightOfCurrentLine) {
+                _characterIndexOfCursor = heightOfCurrentLine;
+            }
+        }
+        redrawRequested = true;
+        break;
+    case SDLK_DOWN:
+        if(_lineIndexOfCursor == lineTextures.size() - 1) {
+            _characterIndexOfCursor = lineTextures[lineTextures.size()-1]->numCharacters();
+            _rememberedCursorHeight = -1;
+        }
+        else {
+            _lineIndexOfCursor++;
+            if(_rememberedCursorHeight > -1) {
+                _characterIndexOfCursor = _rememberedCursorHeight;
+            }
+            else {
+                _rememberedCursorHeight = _characterIndexOfCursor;
+            }
+            int heightOfCurrentLine = lineTextures[_lineIndexOfCursor]->numCharacters();
+            if(_characterIndexOfCursor > heightOfCurrentLine) {
+                _characterIndexOfCursor = heightOfCurrentLine;
+            }
+        }
+        redrawRequested = true;
+        break;
     }
 }
 
@@ -234,6 +308,7 @@ void TextBox::resetState() {
     case State::Editing:
         _lineIndexOfCursor = 0;
         _characterIndexOfCursor = 0;
+        _rememberedCursorHeight = -1;
         break;
     }
 }

@@ -51,4 +51,5 @@ private:
     void switchToStateEditing();
     int _lineIndexOfCursor;
     int _characterIndexOfCursor;
+    int _rememberedCursorHeight = -1;
 };

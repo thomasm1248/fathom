@@ -67,6 +67,11 @@ void TextNode::stopInteraction() {
 }
 
 void TextNode::handleEvent(const SDL_Event& event) {
+    // It should only receive events during interaction
+    if(!interacting) {
+        SDL_Log("Error: TextNode::handleEvent called outside of interaction");
+        return;
+    }
     textBox->handleEvent(event);
     if(textBox->requestsToBeRedrawn()) redrawRequested = true;
 }
