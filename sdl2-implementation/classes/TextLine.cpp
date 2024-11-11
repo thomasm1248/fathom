@@ -63,17 +63,19 @@ void TextLine::removeRange(int startIndex, int count) {
     redrawRequested = true;
 }
 
-bool TextLine::pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth) {
-    // Note: returns true when text was pulled
+int TextLine::pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth) {
+    // Note: returns number of characters pulled
+    int initialLength = text.size();
     std::string leftoverText = insertText(other->text, text.size(), maxWidth);
     if(leftoverText == other->text) {
         // Nothing happened
-        return false;
+        return 0;
     }
     // Give other the leftover text
     other->text = leftoverText;
     other->redrawRequested = true;
-    return true;
+    // Calculate number of characters pulled
+    return text.size() - initialLength;
 }
 
 void TextLine::_render(SDL_Renderer* renderer) {

@@ -18,7 +18,7 @@ public:
     std::string insertNewline(int index);
     void moveLine(SDL_Point newLocation);
     void removeRange(int startIndex, int count);
-    bool pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth);
+    int pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth);
 
 private:
     std::string text;

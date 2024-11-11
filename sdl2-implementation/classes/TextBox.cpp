@@ -92,7 +92,7 @@ void TextBox::_render(SDL_Renderer* renderer) {
 }
 
 void TextBox::insertTextAtCursor(std::string text) {
-    // TODO implement word-wrap and newlines
+    // TODO implement word-wrap and undrawn space
     // Insert text into a line, and add the overflow to the next line...
     int insertIndex = _characterIndexOfCursor; // insert at current cursor
     _characterIndexOfCursor += text.size();
@@ -107,7 +107,7 @@ void TextBox::insertTextAtCursor(std::string text) {
         // Insert at the beggining of all future lines instead
         insertIndex = 0;
         // Update the cursor position
-        if(_characterIndexOfCursor > lineTextures[i]->numCharacters()) {
+        if(_lineIndexOfCursor == i && _characterIndexOfCursor > lineTextures[i]->numCharacters()) {
             // Move cursor to next line
             _lineIndexOfCursor++;
             _characterIndexOfCursor -= lineTextures[i]->numCharacters();
@@ -146,8 +146,21 @@ void TextBox::insertTextAtCursor(std::string text) {
         text = newLine->insertText(text, 0, width - margin*2);
         // Insert the new line into the list
         lineTextures.insert(lineTextures.begin() + lastLineWrapped + ++newLinesCreated, newLine);
+        // Check if cursor needs to be moved
+        int lengthOfLine = newLine->numCharacters();
+        if(_lineIndexOfCursor == lastLineWrapped + newLinesCreated) {
+            // The cursor is on this line
+            // Check if the cursor should move to the next line
+            if(_characterIndexOfCursor > lengthOfLine ||
+               _characterIndexOfCursor == lengthOfLine && text.size() > 0
+            ) {
+                _lineIndexOfCursor++;
+                _characterIndexOfCursor -= lengthOfLine;
+            }
+        }
     }
-    // Make sure last created line is recorded as ending in a newline
+    // Make sure last created line is recorded as ending in a newline instead
+    lineTextures[lastLineWrapped]->wrapped = true;
     lineTextures[lastLineWrapped + newLinesCreated]->wrapped = !lastLineWrappedEndsInNewline;
     // If new lines were inserted before existing lines, push following lines down
     for(int i = lastLineWrapped + 1 + newLinesCreated; i < lineTextures.size(); i++) {
@@ -180,6 +193,9 @@ void TextBox::insertNewlineAtCursor() {
             // Create a new line for the extra text
             auto newLine = std::make_shared<TextLine>(renderer, font, lineLocation);
             lineTextures.push_back(newLine);
+            // Insert the text into the new line
+            insertTextAtCursor(newLineText);
+            _characterIndexOfCursor = 0;
             // Resize texture to accommodate extra line
             resizeTexture(width, margin*2 + fontSize + (lineTextures.size()-1)*(fontSize+lineSpacing));
         }
@@ -198,6 +214,9 @@ void TextBox::insertNewlineAtCursor() {
         // Create a new line for the extra text
         auto newLine = std::make_shared<TextLine>(renderer, font, lineLocation);
         lineTextures.insert(lineTextures.begin() + _lineIndexOfCursor, newLine);
+        // Insert the text into the new line
+        insertTextAtCursor(newLineText);
+        _characterIndexOfCursor = 0;
         // Push the following lines down
         for(int i = _lineIndexOfCursor + 1; i < lineTextures.size(); i++) {
             // Calculate new position of line
@@ -320,12 +339,15 @@ void TextBox::doBackspaceAction() {
         // Remove character before cursor
         _characterIndexOfCursor--;
         lineTextures[_lineIndexOfCursor]->removeRange(_characterIndexOfCursor, 1);
-        // Re-wrap in case the flow of text has changed
-        if(_lineIndexOfCursor != 0 && lineTextures[_lineIndexOfCursor-1]->wrapped) {
-            reWrapFrom(_lineIndexOfCursor-1);
-        }
-        else {
-            reWrapFrom(_lineIndexOfCursor);
+        // Check if this line is wrapped
+        if(lineTextures[_lineIndexOfCursor]->wrapped) {
+            // Re-wrap in case the flow of text has changed
+            if(_lineIndexOfCursor != 0 && lineTextures[_lineIndexOfCursor-1]->wrapped) {
+                reWrapFrom(_lineIndexOfCursor-1);
+            }
+            else {
+                reWrapFrom(_lineIndexOfCursor);
+            }
         }
     }
     // Just in case it wasn't already set
@@ -341,29 +363,29 @@ void TextBox::reWrapFrom(int lineIndexToStartFrom) {
     }
     // Starting with the first line, pull text from the next line
     int i = lineIndexToStartFrom;
-    for(; i < lineTextures.size()-1; i++) {
+    for(;; i++) {
         // Pull text from next line
         int initialLengthOfThisLine = lineTextures[i]->numCharacters();
-        bool textWasPulled = lineTextures[i]->pullTextFrom(lineTextures[i+1], width - margin*2);
+        int charactersPulled = lineTextures[i]->pullTextFrom(lineTextures[i+1], width - margin*2);
         redrawRequested = true;
         // Check if cursor position needs to be updated
         if(_lineIndexOfCursor == i+1) {
             // Cursor is on the next line
-            // Recalculate cursor position
-            int currentLengthOfLine = lineTextures[i]->numCharacters();
-            int charactersPulled = currentLengthOfLine - initialLengthOfThisLine;
             _characterIndexOfCursor -= charactersPulled;
             // If cursor has been pulled into this line, calculate that too
             if(_characterIndexOfCursor < 0) {
                 _lineIndexOfCursor--;
-                _characterIndexOfCursor += currentLengthOfLine;
+                _characterIndexOfCursor += lineTextures[_lineIndexOfCursor]->numCharacters();
             }
         }
         // Stop if text no longer needs to be pulled
-        if(!textWasPulled) break;
+        if(charactersPulled == 0) break;
         // Stop if a newline is encountered
         if(!lineTextures[i+1]->wrapped) break;
+        // Stop if there's only one more line left
+        if(i == lineTextures.size() - 2) break;
     }
+    // At this point, lines[i] is the most recently wrapped line
     // If a line was emptied, remove it and shift following lines up
     if(lineTextures[i+1]->numCharacters() == 0) {
         // "This line": the line before the one that was emptied (lines[i])
