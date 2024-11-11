@@ -378,8 +378,6 @@ void TextBox::reWrapFrom(int lineIndexToStartFrom) {
                 _characterIndexOfCursor += lineTextures[_lineIndexOfCursor]->numCharacters();
             }
         }
-        // Stop if text no longer needs to be pulled
-        if(charactersPulled == 0) break;
         // Stop if a newline is encountered
         if(!lineTextures[i+1]->wrapped) break;
         // Stop if there's only one more line left
