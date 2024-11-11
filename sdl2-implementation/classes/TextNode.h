@@ -21,4 +21,6 @@ private:
     bool interacting = false;
 
     void _render(SDL_Renderer* renderer);
+    void _selectedStatusHasChanged(bool isItSelected);
+    void _hoveredStatusHasChanged(bool isItHovered);
 };

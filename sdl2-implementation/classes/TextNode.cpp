@@ -93,7 +93,20 @@ void TextNode::_render(SDL_Renderer* renderer) {
     SDL_Rect rect = getRect();
     rect.x = 0;
     rect.y = 0;
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    if(interacting || isSelected() || isHovered()) {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    }
+    else {
+        SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+    }
     SDL_RenderFillRect(renderer, &rect);
     drawChild(*textBox);
+}
+
+void TextNode::_selectedStatusHasChanged(bool isItSelected) {
+    redrawRequested = true;
+}
+
+void TextNode::_hoveredStatusHasChanged(bool isItHovered) {
+    redrawRequested = true;
 }
