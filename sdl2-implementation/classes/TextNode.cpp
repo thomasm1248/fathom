@@ -24,11 +24,12 @@ TextNode::TextNode(SDL_Renderer* renderer, std::string text)
     textBox = std::make_shared<TextBox>(renderer, font, 98, text);
 }
 
-TextNode::TextNode(SDL_Renderer* renderer)
+TextNode::TextNode(SDL_Renderer* renderer, SDL_Point _position)
     : Node(renderer)
 {
     numberOfTextNodes++;
     initializeTexture(100, 26);
+    moveTexture(_position.x - 103, _position.y);
 
     // Initialize font if not done already
     if(!font) {

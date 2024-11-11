@@ -5,10 +5,8 @@
 View::View(SDL_Renderer* renderer, SDL_Window* window)
     : Renderable(renderer)
     , window(window)
+    , renderer(renderer)
 {
-    nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer)));
-    nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer)));
-    nodes.push_back(std::shared_ptr<Node>(new TextNode(renderer)));
 }
 
 void View::checkWhatNeedsToBeRedrawn() {
@@ -52,6 +50,12 @@ void View::handleEvent(const SDL_Event& event) {
         case State::Interacting:
             // Pass the event on to the node
             _nodeThatIsBeingInteractedWith->handleEvent(event);
+            break;
+        case State::Waiting:
+            auto newNode = std::shared_ptr<Node>(new TextNode(renderer, mousePosition));
+            nodes.push_back(newNode);
+            switchToStateInteracting(newNode);
+            newNode->handleEvent(event);
             break;
         }
         break;
