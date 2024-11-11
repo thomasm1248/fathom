@@ -267,6 +267,7 @@ void View::switchToStateInteracting(std::shared_ptr<Node> nodeThatWasClickedOn) 
     SDL_Log("State: Interacting");
     // TODO turnOnArrowHandleSystem();
     // Start interacting with node
+    clearSelection();
     _nodeThatIsBeingInteractedWith = nodeThatWasClickedOn;
     _nodeThatIsBeingInteractedWith->startInteraction();
 }
