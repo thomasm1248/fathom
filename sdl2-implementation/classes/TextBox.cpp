@@ -298,7 +298,100 @@ void TextBox::handleKeypress(const SDL_Keysym &keysym) {
 }
 
 void TextBox::doBackspaceAction() {
-    // TODO
+    // Do nothing if there's nothing before the cursor
+    if(_lineIndexOfCursor == 0 && _characterIndexOfCursor == 0) return;
+    // Decide what to do
+    if(_characterIndexOfCursor == 0) {
+        // We can assume line index > 0
+        // Check if the previous line is wrapped
+        if(lineTextures[_lineIndexOfCursor-1]->wrapped) {
+            // Remove last character of previous line
+            int count = lineTextures[_lineIndexOfCursor-1]->numCharacters();
+            lineTextures[_lineIndexOfCursor-1]->removeRange(count-1, 1);
+            reWrapFrom(_lineIndexOfCursor-1);
+        }
+        else {
+            // Remove newline from previous line
+            lineTextures[_lineIndexOfCursor-1]->wrapped = true;
+            reWrapFrom(_lineIndexOfCursor-1);
+        }
+    }
+    else {
+        // Remove character before cursor
+        _characterIndexOfCursor--;
+        lineTextures[_lineIndexOfCursor]->removeRange(_characterIndexOfCursor, 1);
+        // Re-wrap in case the flow of text has changed
+        if(_lineIndexOfCursor != 0 && lineTextures[_lineIndexOfCursor-1]->wrapped) {
+            reWrapFrom(_lineIndexOfCursor-1);
+        }
+        else {
+            reWrapFrom(_lineIndexOfCursor);
+        }
+    }
+    // Just in case it wasn't already set
+    redrawRequested = true;
+}
+
+void TextBox::reWrapFrom(int lineIndexToStartFrom) {
+    // Note: it is assumed that the starting line is wrapped
+    // Note: this function will break if more than one line of text is condensed
+    // Do nothing if we're already on the last line
+    if(lineIndexToStartFrom == lineTextures.size()-1) {
+        return;
+    }
+    // Starting with the first line, pull text from the next line
+    int i = lineIndexToStartFrom;
+    for(; i < lineTextures.size()-1; i++) {
+        // Pull text from next line
+        int initialLengthOfThisLine = lineTextures[i]->numCharacters();
+        bool textWasPulled = lineTextures[i]->pullTextFrom(lineTextures[i+1], width - margin*2);
+        redrawRequested = true;
+        // Check if cursor position needs to be updated
+        if(_lineIndexOfCursor == i+1) {
+            // Cursor is on the next line
+            // Recalculate cursor position
+            int currentLengthOfLine = lineTextures[i]->numCharacters();
+            int charactersPulled = currentLengthOfLine - initialLengthOfThisLine;
+            _characterIndexOfCursor -= charactersPulled;
+            // If cursor has been pulled into this line, calculate that too
+            if(_characterIndexOfCursor < 0) {
+                _lineIndexOfCursor--;
+                _characterIndexOfCursor += currentLengthOfLine;
+            }
+        }
+        // Stop if text no longer needs to be pulled
+        if(!textWasPulled) break;
+        // Stop if a newline is encountered
+        if(!lineTextures[i+1]->wrapped) break;
+    }
+    // If a line was emptied, remove it and shift following lines up
+    if(lineTextures[i+1]->numCharacters() == 0) {
+        // "This line": the line before the one that was emptied (lines[i])
+        // This line takes the cursor if the next line has it
+        if(_lineIndexOfCursor == i+1) {
+            _lineIndexOfCursor = i;
+            _characterIndexOfCursor = lineTextures[i]->numCharacters();
+        }
+        // This line adopts line ending of emptied line
+        lineTextures[i]->wrapped = lineTextures[i+1]->wrapped;
+        // Delete emptied line
+        lineTextures.erase(lineTextures.begin()+i+1);
+        // Find the location of this line
+        SDL_Rect rect = lineTextures[i]->getRect();
+        SDL_Point location;
+        location.x = rect.x;
+        location.y = rect.y;
+        // Place following lines in sequence after this one
+        for(i++; i < lineTextures.size(); i++) {
+            // Step the location one line down
+            location.y += fontSize + lineSpacing;
+            // Move the line there
+            lineTextures[i]->moveLine(location);
+        }
+        // Resize the texture to fit the number of lines
+        rect = getRect();
+        resizeTexture(rect.w, rect.h - fontSize - lineSpacing);
+    }
 }
 
 void TextBox::resetState() {

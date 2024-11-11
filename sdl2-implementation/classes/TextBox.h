@@ -36,6 +36,7 @@ private:
     void insertNewlineAtCursor();
     void handleKeypress(const SDL_Keysym &keysym);
     void doBackspaceAction();
+    void reWrapFrom(int lineIndexToStartFrom);
 
     
 

@@ -57,6 +57,25 @@ void TextLine::moveLine(SDL_Point newLocation) {
     moveTexture(newLocation.x, newLocation.y);
 }
 
+void TextLine::removeRange(int startIndex, int count) {
+    // Remove range of text from string
+    text.erase(startIndex, count);
+    redrawRequested = true;
+}
+
+bool TextLine::pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth) {
+    // Note: returns true when text was pulled
+    std::string leftoverText = insertText(other->text, text.size(), maxWidth);
+    if(leftoverText == other->text) {
+        // Nothing happened
+        return false;
+    }
+    // Give other the leftover text
+    other->text = leftoverText;
+    other->redrawRequested = true;
+    return true;
+}
+
 void TextLine::_render(SDL_Renderer* renderer) {
     // Draw nothing if the string is empty
     if(text.size() == 0) {
