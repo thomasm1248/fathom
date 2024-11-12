@@ -8,14 +8,31 @@ TextBox::TextBox(SDL_Renderer* renderer, TTF_Font* font, int width, std::string 
     , renderer(renderer)
 {
     // Initialize texture
-    initializeTexture(1, 1); // placeholder
+    initializeTexture(width, margin*2+fontSize);
     moveTexture(1, 1); // TODO take a specified position
-    // Break text into lines
+    // Inilialize first line
     SDL_Point startLocation;
-    startLocation.x = 0;
-    startLocation.y = 0;
+    startLocation.x = margin;
+    startLocation.y = margin;
     lineTextures.push_back(std::shared_ptr<TextLine>(new TextLine(renderer, font, startLocation)));
-    insertTextAtCursor(text);
+    // Break text into lines
+    std::vector<std::string> strings;
+    std::string delimiter = "\n";
+    std::string::size_type pos = 0;
+    std::string::size_type prev = 0;
+    while ((pos = text.find(delimiter, prev)) != std::string::npos)
+    {
+        strings.push_back(text.substr(prev, pos - prev));
+        prev = pos + delimiter.size();
+    }
+    strings.push_back(text.substr(prev));
+    // Insert each line into the textbox one-by-one
+    startEditing();
+    for(size_t i = 0; i < strings.size(); i++) {
+        if(i != 0) insertNewlineAtCursor();
+        insertTextAtCursor(strings[i]);
+    }
+    stopEditing();
 }
 
 TextBox::TextBox(SDL_Renderer* renderer, TTF_Font* font, int width)

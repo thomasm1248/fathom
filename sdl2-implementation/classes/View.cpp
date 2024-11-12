@@ -1,12 +1,20 @@
 #include "View.h"
 #include "TextNode.h"
 #include <iostream>
+#include "ViewFileJSON.h"
 
 View::View(SDL_Renderer* renderer, SDL_Window* window)
     : Renderable(renderer)
     , window(window)
     , renderer(renderer)
 {
+    ViewFileJSON reader("test.fathom", renderer);
+    if(reader.read(nodes)) {
+        SDL_Log("Read file successfully");
+    }
+    else {
+        SDL_Log("Failed to read file");
+    }
 }
 
 void View::checkWhatNeedsToBeRedrawn() {

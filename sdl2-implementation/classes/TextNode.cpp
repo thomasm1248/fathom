@@ -4,11 +4,10 @@
 TTF_Font* TextNode::font = NULL;
 int TextNode::numberOfTextNodes = 0;
 
-TextNode::TextNode(SDL_Renderer* renderer, std::string text)
+TextNode::TextNode(SDL_Renderer* renderer, std::string text, SDL_Point _position)
     : Node(renderer)
 {
     numberOfTextNodes++;
-    initializeTexture(100, 26);
 
     // Initialize font if not done already
     if(!font) {
@@ -22,6 +21,10 @@ TextNode::TextNode(SDL_Renderer* renderer, std::string text)
     
     // Initialize textbox
     textBox = std::make_shared<TextBox>(renderer, font, 98, text);
+    // Initialize texture
+    SDL_Rect textBoxRect = textBox->getRect();
+    initializeTexture(100, textBoxRect.h + 2);
+    moveTexture(_position.x, _position.y);
 }
 
 TextNode::TextNode(SDL_Renderer* renderer, SDL_Point _position)

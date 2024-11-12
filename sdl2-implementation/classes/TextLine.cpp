@@ -5,6 +5,7 @@ TextLine::TextLine(SDL_Renderer* renderer, TTF_Font* font, const SDL_Point& loca
     : font(font)
     , Renderable(renderer)
 {
+    initializeTexture(1, 1); // placeholder
     moveTexture(location.x, location.y);
 }
 

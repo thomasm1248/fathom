@@ -30,8 +30,6 @@ private:
     State state = State::Waiting;
     SDL_Point mousePosition;
     SDL_Point mouseVelocity;
-    //std::string filepath;
-    //File file;
     std::vector<std::shared_ptr<Node>> nodes;
     std::vector<std::shared_ptr<Node>> selectedNodes;
     //std::vector<Arrow> arrows;
