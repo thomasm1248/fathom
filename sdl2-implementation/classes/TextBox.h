@@ -37,6 +37,7 @@ private:
     void handleKeypress(const SDL_Keysym &keysym);
     void doBackspaceAction();
     void reWrapFrom(int lineIndexToStartFrom);
+    void moveCursorTo(int x, int y);
 
     
 

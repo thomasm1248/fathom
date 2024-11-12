@@ -38,16 +38,21 @@ void TextBox::handleEvent(const SDL_Event& event) {
     if(state == State::Editing) {
         switch(event.type) {
         case SDL_MOUSEBUTTONDOWN:
-            SDL_Log("TextBox: mouse button down");
+            if(event.button.button == SDL_BUTTON_LEFT) {
+                // Find local position of mouse
+                SDL_Point globalPosition = getGlobalPosition();
+                int x = event.button.x - globalPosition.x;
+                int y = event.button.y - globalPosition.y;
+                // Move cursor to click
+                moveCursorTo(x, y);
+            }
             break;
         case SDL_MOUSEBUTTONUP:
-            SDL_Log("TextBox: mouse button up");
             break;
         case SDL_KEYDOWN:
             handleKeypress(event.key.keysym);
             break;
         case SDL_KEYUP:
-            SDL_Log("TextBox: key up");
             break;
         case SDL_TEXTINPUT:
             std::string inputText = std::string(event.text.text);
@@ -412,6 +417,24 @@ void TextBox::reWrapFrom(int lineIndexToStartFrom) {
         rect = getRect();
         resizeTexture(rect.w, rect.h - fontSize - lineSpacing);
     }
+}
+
+void TextBox::moveCursorTo(int x, int y) {
+    redrawRequested = true;
+    // Find out line
+    _lineIndexOfCursor = (y - margin) / (fontSize + lineSpacing);
+    if(_lineIndexOfCursor < 0) {
+        _lineIndexOfCursor = 0;
+        _characterIndexOfCursor = 0;
+        return;
+    }
+    if(_lineIndexOfCursor >= lineTextures.size()) {
+        _lineIndexOfCursor = lineTextures.size()-1;
+        _characterIndexOfCursor = lineTextures[_lineIndexOfCursor]->numCharacters();
+        return;
+    }
+    // Find out character index
+    _characterIndexOfCursor = lineTextures[_lineIndexOfCursor]->indexAtXPos(x - margin);
 }
 
 void TextBox::resetState() {

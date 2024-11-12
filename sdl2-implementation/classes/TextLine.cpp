@@ -13,8 +13,23 @@ int TextLine::numCharacters() {
 }
 
 int TextLine::indexAtXPos(int x) {
-    SDL_Log("Error: TextLine::indexAtXPos is not defined");
-    return 0;
+    // Snap index to lower boundary
+    if(x <= 0) return 0;
+    // Find the index and position of the character x is in
+    int leftBoundOfCharacter;
+    int index;
+    TTF_MeasureUTF8(font, text.c_str(), x, &leftBoundOfCharacter, &index);
+    // Snap index to upper boundary
+    if(index == text.size()) return index;
+    // Find position of next character
+    int rightBoundOfCharacter;
+    TTF_MeasureUTF8(font, text.substr(0, index+1).c_str(), std::numeric_limits<int>::max(), &rightBoundOfCharacter, NULL);
+    // Calculate midpoint
+    int midpoint = (leftBoundOfCharacter + rightBoundOfCharacter) / 2;
+    // If x is past midpoint, increment index
+    if(x > midpoint) index++;
+    // Return the calculated index
+    return index;
 }
 
 int TextLine::xPosAtIndex(int index) {
