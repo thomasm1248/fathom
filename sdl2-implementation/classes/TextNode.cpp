@@ -92,6 +92,10 @@ void TextNode::handleEvent(const SDL_Event& event) {
     }
 }
 
+std::string TextNode::getContent() {
+    return textBox->getText();
+}
+
 void TextNode::_render(SDL_Renderer* renderer) {
     SDL_Rect rect = getRect();
     rect.x = 0;

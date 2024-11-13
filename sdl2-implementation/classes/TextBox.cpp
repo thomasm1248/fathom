@@ -1,5 +1,6 @@
 #include "TextBox.h"
 #include <iostream>
+#include <sstream>
 
 TextBox::TextBox(SDL_Renderer* renderer, TTF_Font* font, int width, std::string text)
     : width(width)
@@ -86,6 +87,17 @@ void TextBox::startEditing() {
 
 void TextBox::stopEditing() {
     switchToStateDisplaying();
+}
+
+std::string TextBox::getText() {
+    std::stringstream ss;
+    for(size_t i = 0; i < lineTextures.size(); i++) {
+        ss << lineTextures[i]->getText();
+        if(!lineTextures[i]->wrapped) ss << '\n';
+    }
+    std::string text;
+    ss >> text;
+    return text;
 }
 
 void TextBox::_render(SDL_Renderer* renderer) {

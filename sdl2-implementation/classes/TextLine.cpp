@@ -94,6 +94,10 @@ int TextLine::pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth) {
     return text.size() - initialLength;
 }
 
+std::string TextLine::getText() {
+    return text;
+}
+
 void TextLine::_render(SDL_Renderer* renderer) {
     // Draw nothing if the string is empty
     if(text.size() == 0) {

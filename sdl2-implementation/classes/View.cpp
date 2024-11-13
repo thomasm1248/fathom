@@ -7,13 +7,14 @@ View::View(SDL_Renderer* renderer, SDL_Window* window)
     : Renderable(renderer)
     , window(window)
     , renderer(renderer)
+    , viewFile(new ViewFileJSON("test.fathom", renderer))
 {
-    ViewFileJSON reader("test.fathom", renderer);
-    if(reader.read(nodes)) {
+    if(viewFile->read(nodes)) {
         SDL_Log("Read file successfully");
     }
     else {
         SDL_Log("Failed to read file");
+        viewFile = nullptr;
     }
 }
 
@@ -35,9 +36,16 @@ void View::checkWhatNeedsToBeRedrawn() {
 }
 
 void View::handleEvent(const SDL_Event& event) {
+    std::string inputText;
+    SDL_Keymod modState;
     // Determine what type of event it is
     switch(event.type) {
     case SDL_KEYDOWN:
+        // Check for app-wide keyboard shortcuts
+        if(event.key.keysym.sym == SDLK_s && event.key.keysym.mod & KMOD_CTRL) {
+            viewFile->write(nodes);
+        }
+        // Do state-specific behaviors
         switch(state) {
         case State::Waiting:
             if(event.key.keysym.sym == SDLK_BACKSPACE) {

@@ -8,6 +8,7 @@ class ViewFileJSON : public ViewFile
 public:
     ViewFileJSON(std::string filepath, SDL_Renderer* renderer);
     bool read(std::vector<std::shared_ptr<Node>> &nodes);
+    bool write(std::vector<std::shared_ptr<Node>> &nodes);
 
 private:
     std::string filepath;

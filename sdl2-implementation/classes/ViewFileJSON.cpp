@@ -2,6 +2,7 @@
 #include <iostream>
 #include <errno.h>
 #include "TextNode.h"
+#include <fstream>
 
 using namespace sajson;
 
@@ -52,6 +53,25 @@ bool ViewFileJSON::read(std::vector<std::shared_ptr<Node>> &nodes) {
 
     delete[] buffer;
 
+    return true;
+}
+
+bool ViewFileJSON::write(std::vector<std::shared_ptr<Node>> &nodes) {
+    std::ofstream file;
+    file.open(filepath);
+    file << "{\"version\": 0, \"nodes\": [";
+    for(size_t i = 0; i < nodes.size(); i++) {
+        if(i != 0) file << ", ";
+        file << "{\"id\": " << i << ", ";
+        auto rect = nodes[i]->getRect();
+        file << "\"x\": " << rect.x << ", ";
+        file << "\"y\": " << rect.y << ", ";
+        file << "\"type\": 0, ";
+        auto content = nodes[i]->getContent();
+        file << "\"content\": \"" << content << "\"}";
+    }
+    file << "]}\n";
+    file.close();
     return true;
 }
     
@@ -110,8 +130,8 @@ bool ViewFileJSON::readNode(std::vector<std::shared_ptr<Node>>& nodes, const saj
     int x;
     bool foundY = false;
     int y;
-    bool foundText = false;
-    std::string text;
+    bool foundContent = false;
+    std::string content;
     auto length = node.get_length();
     for(auto i = 0u; i < length; i++) {
         auto key = node.get_object_key(i).as_string();
@@ -128,20 +148,20 @@ bool ViewFileJSON::readNode(std::vector<std::shared_ptr<Node>>& nodes, const saj
                 foundY = true;
             }
         }
-        else if(key == "text") {
+        else if(key == "content") {
             if(val.get_type() == TYPE_STRING) {
-                text = val.as_string();
-                foundText = true;
+                content = val.as_string();
+                foundContent = true;
             }
         }
     }
     // Put together node
-    if(foundX && foundY && foundText) {
+    if(foundX && foundY && foundContent) {
         // Make node
         SDL_Point location;
         location.x = x;
         location.y = y;
-        auto newNode = std::shared_ptr<TextNode>(new TextNode(renderer, text, location));
+        auto newNode = std::shared_ptr<TextNode>(new TextNode(renderer, content, location));
         nodes.push_back(newNode);
         SDL_Log("pushed a node");
         return true;

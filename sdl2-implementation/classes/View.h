@@ -6,6 +6,7 @@
 #include "Renderable.h"
 #include <vector>
 #include <memory>
+#include "ViewFile.h"
 
 class View : public Renderable
 {
@@ -17,6 +18,7 @@ public:
 private:
     SDL_Window* window;
     SDL_Renderer* renderer;
+    std::shared_ptr<ViewFile> viewFile;
     enum class State {
         Waiting,
         //Panning, TODO

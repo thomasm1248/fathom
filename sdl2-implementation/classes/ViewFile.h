@@ -9,4 +9,5 @@ class ViewFile
 {
 public:
     virtual bool read(std::vector<std::shared_ptr<Node>> &nodes) = 0;
+    virtual bool write(std::vector<std::shared_ptr<Node>>& nodes) = 0;
 };

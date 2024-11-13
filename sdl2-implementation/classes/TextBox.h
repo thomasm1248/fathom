@@ -15,6 +15,7 @@ public:
     // Methods for parent to use
     void startEditing();
     void stopEditing();
+    std::string getText();
 
 private:
     int fontSize = 14;

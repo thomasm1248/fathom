@@ -2,6 +2,7 @@
 
 #include <SDL.h>
 #include "Renderable.h"
+#include <string>
 
 class Node : public Renderable
 {
@@ -16,6 +17,7 @@ public:
     virtual void startInteraction() {} // override this
     virtual void stopInteraction() {} // override this
     virtual void handleEvent(const SDL_Event& event) {} // override this
+    virtual std::string getContent() = 0;
 
 protected:
     virtual void _selectedStatusHasChanged(bool isItSelected); // override this
