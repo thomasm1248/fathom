@@ -95,4 +95,5 @@ private:
     void moveNodeToFront(std::shared_ptr<Node> node);
     void clearSelection();
     void addNodeToSelection(std::shared_ptr<Node> node);
+    void deleteSelectedNodes();
 };

@@ -39,6 +39,11 @@ void View::handleEvent(const SDL_Event& event) {
     switch(event.type) {
     case SDL_KEYDOWN:
         switch(state) {
+        case State::Waiting:
+            if(event.key.keysym.sym == SDLK_BACKSPACE) {
+                deleteSelectedNodes();
+            }
+            break;
         case State::Interacting:
             // Pass the event on to the node
             _nodeThatIsBeingInteractedWith->handleEvent(event);
@@ -399,4 +404,18 @@ void View::addNodeToSelection(std::shared_ptr<Node> node) {
     if(!node->isSelected()) selectedNodes.push_back(node);
     node->isSelected(true);
     // TODO _nodeThatWasMostRecentlySelected = node;
+}
+
+void View::deleteSelectedNodes() {
+    for(size_t i = 0; i < nodes.size(); i++) {
+        for(size_t j = 0; j < selectedNodes.size(); j++) {
+            if(selectedNodes[j] == nodes[i]) {
+                nodes.erase(nodes.begin() + i--);
+                break;
+            }
+        }
+    }
+    selectedNodes.clear();
+    redrawRequested = true;
+    fullRedrawNeeded = true;
 }
