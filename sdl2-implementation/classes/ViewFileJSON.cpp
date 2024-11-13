@@ -3,6 +3,7 @@
 #include <errno.h>
 #include "TextNode.h"
 #include <fstream>
+#include "Util.h"
 
 using namespace sajson;
 
@@ -68,6 +69,8 @@ bool ViewFileJSON::write(std::vector<std::shared_ptr<Node>> &nodes) {
         file << "\"y\": " << rect.y << ", ";
         file << "\"type\": 0, ";
         auto content = nodes[i]->getContent();
+        Util::replace_all(content, "\n", "\\n");
+        Util::replace_all(content, "\"", "\\\"");
         file << "\"content\": \"" << content << "\"}";
     }
     file << "]}\n";

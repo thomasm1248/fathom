@@ -95,9 +95,7 @@ std::string TextBox::getText() {
         ss << lineTextures[i]->getText();
         if(!lineTextures[i]->wrapped) ss << '\n';
     }
-    std::string text;
-    ss >> text;
-    return text;
+    return ss.str();
 }
 
 void TextBox::_render(SDL_Renderer* renderer) {
