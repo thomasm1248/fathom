@@ -1,13 +1,14 @@
 #pragma once
 
 #include <SDL.h>
-#include "Renderable.h"
 #include <string>
+#include "Arrow.h"
+#include "ArrowTerminal.h"
 
-class Node : public Renderable
+class Node : public ArrowTerminal
 {
 public:
-    Node(SDL_Renderer* renderer) : Renderable(renderer) {}
+    Node(SDL_Renderer* renderer) : ArrowTerminal(renderer) {}
     void translate(int dx, int dy);
     bool isSelected();
     void isSelected(bool isIt);

@@ -58,6 +58,7 @@ void Renderable::drawChild(Renderable& child) {
     SDL_QueryTexture(child.currentTexture, NULL, NULL, &destination.w, &destination.h);
     // Draw the texture
     SDL_SetRenderTarget(renderer, currentTexture);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_RenderCopy(renderer, child.currentTexture, NULL, &destination);
     child.moved = false;
 }
@@ -80,12 +81,12 @@ void Renderable::drawChildIntoClipRect(Renderable& child, SDL_Rect const& clipRe
     source.h = destination.h;
     // Draw from source to destination
     SDL_SetRenderTarget(renderer, currentTexture);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_RenderCopy(renderer, child.currentTexture, &source, &destination);
 }
 
 void Renderable::resizeTexture(int width, int height) {
-    if(currentTexture)
-        initializeTexture(width, height);
+    initializeTexture(width, height);
 }
 
 void Renderable::initializeTexture(int width, int height) {
@@ -97,6 +98,8 @@ void Renderable::initializeTexture(int width, int height) {
         SDL_TEXTUREACCESS_TARGET,
         width, height
     );
+    SDL_SetTextureBlendMode(currentTexture, SDL_BLENDMODE_BLEND);
+    redrawRequested = true;
 }
 
 void Renderable::moveTexture(int x, int y) {

@@ -8,6 +8,9 @@ int main(int argc, char** argv) {
         std::cout << "Error initializing SDL: " << SDL_GetError() << '\n';
         return 1;
     }
+    /*SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);*/
 
     // Create window
     SDL_Window* window = SDL_CreateWindow(

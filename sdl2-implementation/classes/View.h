@@ -16,6 +16,8 @@ public:
     void checkWhatNeedsToBeRedrawn();
 
 private:
+    static constexpr int panSensitivity = 10;
+
     SDL_Window* window;
     SDL_Renderer* renderer;
     std::shared_ptr<ViewFile> viewFile;
@@ -34,9 +36,10 @@ private:
     SDL_Point mouseVelocity;
     std::vector<std::shared_ptr<Node>> nodes;
     std::vector<std::shared_ptr<Node>> selectedNodes;
-    //std::vector<Arrow> arrows;
+    std::vector<std::shared_ptr<Arrow>> arrows;
     std::vector<SDL_Rect> overlapRects;
     bool fullRedrawNeeded = true;
+    SDL_FPoint fractionalPan{0.0,0.0};
 
     void _render(SDL_Renderer* renderer);
 

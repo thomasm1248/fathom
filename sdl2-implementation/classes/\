@@ -3,7 +3,6 @@
 #include <iostream>
 #include "ViewFileJSON.h"
 #include <cmath>
-#include "Util.h"
 
 View::View(SDL_Renderer* renderer, SDL_Window* window)
     : Renderable(renderer)
@@ -21,23 +20,10 @@ View::View(SDL_Renderer* renderer, SDL_Window* window)
 }
 
 void View::checkWhatNeedsToBeRedrawn() {
-    overlapRects.clear();
-    // Check all arrows to see if anything needs to be redrawn
-    for(size_t i = 0; i < arrows.size(); i++) {
-        // Check if the arrow wants stuff underneath it to be redrawn
-        SDL_Rect rect = arrows[i]->arrowCurve->getOverlapRect();
-        if(!SDL_RectEmpty(&rect)) {
-            redrawRequested = true;
-            overlapRects.push_back(rect);
-        }
-        // Check if the node itself requests to be redrawn
-        if(!redrawRequested && (arrows[i]->arrowCurve->requestsToBeRedrawn() || arrows[i]->arrowCurve->hasMoved())) {
-            redrawRequested = true;
-        }
-    }
     // Check all nodes to see if anything needs to be redrawn
+    overlapRects.clear();
     for(size_t i = 0; i < nodes.size(); i++) {
-        // Check if the node wants stuff underneath it to be redrawn
+        // Check if the node wants nodes underneath it to be redrawn
         SDL_Rect rect = nodes[i]->getOverlapRect();
         if(!SDL_RectEmpty(&rect)) {
             redrawRequested = true;
@@ -58,7 +44,7 @@ void View::handleEvent(const SDL_Event& event) {
     case SDL_KEYDOWN:
         // Check for app-wide keyboard shortcuts
         if(event.key.keysym.sym == SDLK_s && event.key.keysym.mod & KMOD_CTRL) {
-            viewFile->write(nodes, arrows);
+            viewFile->write(nodes);
         }
         // Do state-specific behaviors
         switch(state) {
@@ -188,22 +174,6 @@ void View::handleEvent(const SDL_Event& event) {
             break;
         }
         break;
-    case SDL_MOUSEWHEEL:
-        // No matter what state, scroll the view
-        {
-            fractionalPan.x += -event.wheel.preciseX * panSensitivity;
-            fractionalPan.y += event.wheel.preciseY * panSensitivity;
-            int x = fractionalPan.x;
-            int y = fractionalPan.y;
-            fractionalPan.x -= x;
-            fractionalPan.y -= y;
-            for(size_t i = 0; i < nodes.size(); i++) {
-                nodes[i]->translate(x, y);
-            }
-            redrawRequested = true;
-            fullRedrawNeeded = true;
-        }
-        break;
     case SDL_WINDOWEVENT:
         redrawRequested = true;
         fullRedrawNeeded = true;
@@ -226,17 +196,10 @@ void View::_render(SDL_Renderer* renderer) {
         screenRect.y = 0;
         SDL_GetWindowSize(window, &screenRect.w, &screenRect.h);
         SDL_RenderFillRect(renderer, &screenRect);
-        // Render arrows
-        for(size_t i = 0; i < arrows.size(); i++) {
-            // Reset arrow's overlap rect
-            arrows[i]->arrowCurve->getOverlapRect();
-            // Redraw arrow curve
-            drawChild(*arrows[i]->arrowCurve);
-        }
         // Render nodes
         for(size_t i = 0; i < nodes.size(); i++) {
             // Reset node's requested overlap rect
-            nodes[i]->getOverlapRect();
+            SDL_Rect rect = nodes[i]->getOverlapRect();
             // Redraw node
             drawChild(*nodes[i]);
         }
@@ -250,23 +213,6 @@ void View::_render(SDL_Renderer* renderer) {
     for(size_t i = 0; i < overlapRects.size(); i++) {
         SDL_RenderFillRect(renderer, &overlapRects[i]);
     }
-    // Render arrow curves
-    for(size_t i = 0; i < arrows.size(); i++) {
-        // Redraw arrow curve if it needs to
-        if(arrows[i]->arrowCurve->requestsToBeRedrawn() || arrows[i]->arrowCurve->hasMoved()) {
-            drawChild(*arrows[i]->arrowCurve);
-            overlapRects.push_back(arrows[i]->arrowCurve->getRect());
-        }
-        // Otherwise, only redraw sections of it that overlap other things
-        // that returned an overlap rect
-        else {
-            SDL_Rect curveRect = arrows[i]->arrowCurve->getRect();
-            for(size_t j = 0; j < overlapRects.size(); j++) {
-                // If the curve overlapps the rect, draw it again
-                drawChildIntoClipRect(*arrows[i]->arrowCurve, overlapRects[j]);
-            }
-        }
-    }
     // Render nodes
     for(size_t i = 0; i < nodes.size(); i++) {
         // Redraw node if it needs to
@@ -274,7 +220,7 @@ void View::_render(SDL_Renderer* renderer) {
             drawChild(*nodes[i]);
             overlapRects.push_back(nodes[i]->getRect());
         }
-        // Otherwise, only redraw sections of it that overlap other things that
+        // Otherwise, only redraw sections of it that overlap other nodes that
         // returned an overlap rect
         else {
             SDL_Rect nodeRect = nodes[i]->getRect();

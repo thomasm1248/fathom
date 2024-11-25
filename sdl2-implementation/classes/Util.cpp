@@ -1,4 +1,5 @@
 #include "Util.h"
+#include <iostream>
 
 void Util::replace_all(
     std::string& s,
@@ -24,4 +25,8 @@ void Util::replace_all(
 
     buf.append(s, prevPos, s.size() - prevPos);
     s.swap(buf);
+}
+
+void Util::print(SDL_FPoint point) {
+    std::cout << "(" << point.x << ", " << point.y << ")\n";
 }

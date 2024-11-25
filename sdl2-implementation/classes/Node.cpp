@@ -6,6 +6,7 @@ void Node::translate(int dx, int dy) {
     rect.x += dx;
     rect.y += dy;
     moveTexture(rect.x, rect.y);
+    translateArrows();
 }
 
 bool Node::isSelected() {
