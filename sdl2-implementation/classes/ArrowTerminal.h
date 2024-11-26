@@ -13,6 +13,7 @@ public:
     SDL_FPoint getCenter();
     void addOutgoingArrow(std::weak_ptr<Arrow> arrow);
     void addIncomingArrow(std::weak_ptr<Arrow> arrow);
+    void removeArrow(std::weak_ptr<Arrow> arrow);
 
 protected:
     void translateArrows();

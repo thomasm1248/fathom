@@ -18,10 +18,25 @@ View::View(SDL_Renderer* renderer, SDL_Window* window)
         SDL_Log("Failed to read file");
         viewFile = nullptr;
     }
+    // Initialize arrow handle system
+    _arrowHandle = std::shared_ptr<ArrowHandle>(new ArrowHandle(renderer));
+}
+
+void View::processDynamicContent() {
+    // While creating an arrow, animate it
+    if(state == State::NewArrow) {
+        _arrowThatIsBeingCreated->doPhysics();
+    }
 }
 
 void View::checkWhatNeedsToBeRedrawn() {
     overlapRects.clear();
+    // Check if the arrow handle has an overlap rect
+    SDL_Rect rect;
+    if(_arrowHandle->getOverlapRect(rect)) {
+        redrawRequested = true;
+        overlapRects.push_back(rect);
+    }
     // Check all arrows to see if anything needs to be redrawn
     for(size_t i = 0; i < arrows.size(); i++) {
         // Check if the arrow wants stuff underneath it to be redrawn
@@ -116,6 +131,23 @@ void View::handleEvent(const SDL_Event& event) {
                 }
             }
         }
+        // If arrow handle system is on, update which node has arrow handle
+        if(_arrowHandleSystemIsOn) {
+            auto arrowHandleRect = _arrowHandle->getRect();
+            if(_arrowHandle->isActive()) {
+                auto nodeUnderMouse = getNodeAtMouse();
+                if(!SDL_PointInRect(&mousePosition, &arrowHandleRect) || nodeUnderMouse && nodeUnderMouse != _nodeThatHasArrowHandle) {
+                    _nodeThatHasArrowHandle = nodeUnderMouse;
+                    _arrowHandle->setToNode(_nodeThatHasArrowHandle);
+                }
+            }
+            else {
+                _nodeThatHasArrowHandle = getNodeAtMouse();
+                if(_nodeThatHasArrowHandle) {
+                    _arrowHandle->setToNode(_nodeThatHasArrowHandle);
+                }
+            }
+        }
         // Do state-specific stuff
         switch(state) {
         case State::Dragging:
@@ -129,11 +161,43 @@ void View::handleEvent(const SDL_Event& event) {
             // Pass the event on to the node
             _nodeThatIsBeingInteractedWith->handleEvent(event);
             break;
+        case State::NewArrow:
+            {
+                auto nodeUnderMouse = getNodeAtMouse();
+                if(_nodeThatArrowMightConnectTo != nodeUnderMouse) {
+                    // Disconnect arrow from previous node
+                    if(_nodeThatArrowMightConnectTo) {
+                        _nodeThatArrowMightConnectTo->removeArrow(_arrowThatIsBeingCreated);
+                        _arrowThatIsBeingCreated->disconnectFromTarget();
+                        _nodeThatArrowMightConnectTo = nullptr;
+                    }
+                    // Connect arrow to new node
+                    if(nodeUnderMouse) {
+                        _nodeThatArrowMightConnectTo = nodeUnderMouse;
+                        _nodeThatArrowMightConnectTo->addIncomingArrow(_arrowThatIsBeingCreated);
+                        _arrowThatIsBeingCreated->attachToNode(_nodeThatArrowMightConnectTo);
+                    }
+                }
+                // Make end of arrow track mouse if it isn't connected to a node
+                if(!_nodeThatArrowMightConnectTo) {
+                    _arrowThatIsBeingCreated->updateEndFromMousePosition(mousePosition);
+                }
+            }
+            break;
         }
         break;
     case SDL_MOUSEBUTTONDOWN:
         // If a node wasn't clicked, clear selected nodes
         if(getNodeAtMouse() == nullptr) clearSelection();
+        // If arrow handle was clicked, start making an arrow
+        if(event.button.button == SDL_BUTTON_LEFT && _arrowHandleSystemIsOn && _arrowHandle->isActive() && getNodeAtMouse() == nullptr) {
+            // Check if user clicked on arrow handle
+            auto rect = _arrowHandle->getRect();
+            if(SDL_PointInRect(&mousePosition, &rect)) {
+                switchToStateNewArrow(_nodeThatHasArrowHandle);
+                break; // No more action needed
+            }
+        }
         // Do state-specific things
         switch(state) {
         case State::Waiting:
@@ -186,6 +250,29 @@ void View::handleEvent(const SDL_Event& event) {
             // Pass event on to the node
             _nodeThatIsBeingInteractedWith->handleEvent(event);
             break;
+        case State::NewArrow:
+            if(event.button.button == SDL_BUTTON_LEFT) {
+                if(_nodeThatArrowMightConnectTo == _nodeThatIsTheSourceOfArrow) {
+                    // Delete the arrow
+                    deleteArrow(_arrowThatIsBeingCreated);
+                    // Go to waiting state again
+                    switchToStateWaiting();
+                }
+                else if(_nodeThatArrowMightConnectTo) {
+                    // Attach the arrow to the node permanently
+                    _arrowThatIsBeingCreated->finalizeCreation();
+                    // Begin editing the label of the arrow TODO
+                    switchToStateWaiting();
+                }
+                else {
+                    // Create a new node, and connect the arrow to it TODO
+                    // TODO the following lines are only a placeholder:
+                    deleteArrow(_arrowThatIsBeingCreated);
+                    // Go to waiting state again
+                    switchToStateWaiting();
+                }
+            }
+            break;
         }
         break;
     case SDL_MOUSEWHEEL:
@@ -200,6 +287,9 @@ void View::handleEvent(const SDL_Event& event) {
             for(size_t i = 0; i < nodes.size(); i++) {
                 nodes[i]->translate(x, y);
             }
+            // Update arrow handle if needed
+            if(_arrowHandle->isActive()) _arrowHandle->setToNode(_nodeThatHasArrowHandle);
+            // Update the view
             redrawRequested = true;
             fullRedrawNeeded = true;
         }
@@ -226,6 +316,12 @@ void View::_render(SDL_Renderer* renderer) {
         screenRect.y = 0;
         SDL_GetWindowSize(window, &screenRect.w, &screenRect.h);
         SDL_RenderFillRect(renderer, &screenRect);
+        // Draw arrow handle
+        SDL_Rect none;
+        _arrowHandle->getOverlapRect(none); // reset overlap rect
+        if(_arrowHandle->isActive()) {
+            drawChild(*_arrowHandle);
+        }
         // Render arrows
         for(size_t i = 0; i < arrows.size(); i++) {
             // Reset arrow's overlap rect
@@ -245,10 +341,24 @@ void View::_render(SDL_Renderer* renderer) {
 
     // Otherwise, do a more efficient redraw:
 
+    // TODO remove off-screen overlap rects
     // Draw background behind overlap rects
     SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
     for(size_t i = 0; i < overlapRects.size(); i++) {
         SDL_RenderFillRect(renderer, &overlapRects[i]);
+    }
+    // Draw arrow handle
+    if(_arrowHandle->isActive()) {
+        if(_arrowHandle->requestsToBeRedrawn()) {
+            drawChild(*_arrowHandle);
+            overlapRects.push_back(_arrowHandle->getRect());
+            SDL_Rect rect = _arrowHandle->getRect();
+        }
+        else {
+            for(size_t j = 0; j < overlapRects.size(); j++) {
+                drawChildIntoClipRect(*_arrowHandle, overlapRects[j]);
+            }
+        }
     }
     // Render arrow curves
     for(size_t i = 0; i < arrows.size(); i++) {
@@ -309,6 +419,19 @@ void View::hoveringSystemOn(bool isIt) {
     }
 }
 
+void View::arrowHandleSystemOn(bool isIt) {
+    // TODO don't break arrow handle system inbetween states
+    _arrowHandleSystemIsOn = isIt;
+    if(_arrowHandleSystemIsOn) {
+        _nodeThatHasArrowHandle = getNodeAtMouse();
+        _arrowHandle->setToNode(_nodeThatHasArrowHandle);
+    }
+    else {
+        _nodeThatHasArrowHandle = nullptr;
+        _arrowHandle->reset();
+    }
+}
+
 void View::switchToStateWaiting() {
     resetState();
     state = State::Waiting;
@@ -320,6 +443,7 @@ void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shi
     state = State::Dragging;
     SDL_Log("State: Dragging");
     hoveringSystemOn(false);
+    arrowHandleSystemOn(false);
     // If you try to drag a node that's not selected, other nodes will get deselected
     if(!nodeToBeDragged->isSelected()) {
         if(!shiftButtonIsPressed) clearSelection();
@@ -348,6 +472,17 @@ void View::switchToStateInteracting(std::shared_ptr<Node> nodeThatWasClickedOn) 
     _nodeThatIsBeingInteractedWith->startInteraction();
 }
 
+void View::switchToStateNewArrow(std::shared_ptr<Node> sourceNode) {
+    resetState();
+    state = State::NewArrow;
+    arrowHandleSystemOn(false);
+    // Make a new arrow
+    _nodeThatIsTheSourceOfArrow = sourceNode;
+    _arrowThatIsBeingCreated = std::shared_ptr<Arrow>(new Arrow(renderer, sourceNode, mousePosition));
+    arrows.push_back(_arrowThatIsBeingCreated);
+    _nodeThatIsTheSourceOfArrow->addOutgoingArrow(_arrowThatIsBeingCreated);
+}
+
 void View::resetState() {
     switch(state) {
     case State::Waiting:
@@ -360,6 +495,7 @@ void View::resetState() {
         _nodeThatIsDirectTargetOfDrag = nullptr;
         _userMightBeTryingToInteractWithNode = false;
         hoveringSystemOn(true);
+        arrowHandleSystemOn(true);
         break;
     case State::Interacting:
         /* TODO delete empty label nodes
@@ -371,14 +507,16 @@ void View::resetState() {
         _nodeThatIsBeingInteractedWith = nullptr;
         // TODO turnOffArrowHandleSystem();
         break;
+    case State::NewArrow:
+        _nodeThatIsTheSourceOfArrow = nullptr;
+        _arrowThatIsBeingCreated = nullptr;
+        _nodeThatArrowMightConnectTo = nullptr;
+        arrowHandleSystemOn(true);
+        break;
     /*
     case State::Selecting:
         //selectionBox.style.visibility = "collapse"; TODO
         _mousePositionAtStartOfSelection = nullptr;
-        break;
-    case State::NewArrow:
-        _arrowThatIsBeingCreated = nullptr;
-        _nodeThatArrowMightConnectTo = nullptr;
         break;
     case State::DraggingArrow:
       _arrowThatIsBeingDragged = nullptr;
@@ -410,11 +548,6 @@ void View::switchToStateSelecting() {
 
 Node* _nodeThatIsBeingInteractedWith;
 void View::switchToStateInteracting() {
-}
-
-//Arrow* _arrowThatIsBeingCreated TODO
-Node* _nodeThatArrowMightConnectTo;
-void View::switchToStateNewArrow() {
 }
 
 //Arrow* _arrowThatIsBeingDragged: Arrow = null; TODO
@@ -481,4 +614,16 @@ void View::deleteSelectedNodes() {
     selectedNodes.clear();
     redrawRequested = true;
     fullRedrawNeeded = true;
+}
+
+void View::deleteArrow(std::shared_ptr<Arrow> arrow) {
+    for(size_t i = 0; i < arrows.size(); i++) {
+        if(arrows[i] == arrow) {
+            arrows.erase(arrows.begin() + i);
+            redrawRequested = true;
+            fullRedrawNeeded = true;
+            return;
+        }
+    }
+    SDL_Log("Error: tried to delete an arrow that wasn't on the list");
 }

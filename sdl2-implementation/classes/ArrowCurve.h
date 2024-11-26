@@ -16,7 +16,11 @@ public:
     void setSource(SDL_FPoint source);
     void setControl(SDL_FPoint control);
     void setTarget(SDL_FPoint target);
+    SDL_FPoint getSource();
+    SDL_FPoint getControl();
+    SDL_FPoint getTarget();
     void setTargetBody(std::shared_ptr<Renderable> targetBody);
+    void removeTargetBody();
     SDL_Rect getOverlapRect();
     SDL_FPoint getControlPoint();
     void updateSource(SDL_FPoint newSource);

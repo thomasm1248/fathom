@@ -1,4 +1,5 @@
 #include "Arrow.h"
+#include "Util.h"
 
 Arrow::Arrow(SDL_Renderer* renderer, std::shared_ptr<ArrowTerminal> sourceNode, SDL_Point mousePosition)
     : sourceNode(sourceNode)
@@ -30,12 +31,26 @@ Arrow::Arrow(SDL_Renderer* renderer, std::shared_ptr<ArrowTerminal> sourceNode, 
 }
 
 void Arrow::updateEndFromMousePosition(SDL_Point mousePosition) {
-    // TODO
+    if(state != State::Creating) {
+        SDL_Log("Error: Arrow::updateEndFromMousePosition() called during the wrong state");
+        return;
+    }
+    _mousePosition = mousePosition;
+    SDL_FPoint newTarget;
+    newTarget.x = _mousePosition.x;
+    newTarget.y = _mousePosition.y;
+    arrowCurve->setTarget(newTarget);
 }
 
 void Arrow::attachToNode(std::shared_ptr<ArrowTerminal> targetNode) {
     this->targetNode = targetNode;
+    arrowCurve->setTarget(targetNode->getCenter());
     arrowCurve->setTargetBody(targetNode);
+}
+
+void Arrow::disconnectFromTarget() {
+    targetNode = nullptr;
+    arrowCurve->removeTargetBody();
 }
 
 void Arrow::updateSource() {
@@ -58,6 +73,23 @@ std::shared_ptr<ArrowTerminal> Arrow::getTargetNode() {
     return targetNode;
 }
 
+void Arrow::doPhysics() {
+    SDL_FPoint midpoint = Util::scale(Util::add(arrowCurve->getSource(), arrowCurve->getTarget()), 0.5);
+    SDL_FPoint currentControl = arrowCurve->getControl();
+    SDL_FPoint force = Util::scale(Util::subtract(midpoint, currentControl), 0.001);
+    _controlVelocity = Util::scale(_controlVelocity, 0.98);
+    _controlVelocity = Util::add(_controlVelocity, force);
+    arrowCurve->setControl(Util::add(currentControl, _controlVelocity));
+}
+
+void Arrow::finalizeCreation() {
+    if(state != State::Creating) {
+        SDL_Log("Error: Arrow::finalizeCreation() called outside of Creating state");
+        return;
+    }
+    switchToStateNothing();
+}
+
 void Arrow::resetState() {
     switch(state) {
         case State::Creating:
@@ -75,4 +107,11 @@ void Arrow::switchToStateCreating(SDL_Point mousePosition) {
     resetState();
     state = State::Creating;
     _mousePosition = mousePosition;
+    _controlVelocity.x = 0;
+    _controlVelocity.y = 0;
+}
+
+void Arrow::switchToStateNothing() {
+    resetState();
+    state == State::Nothing;
 }

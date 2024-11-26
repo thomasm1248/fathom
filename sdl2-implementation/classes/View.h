@@ -7,16 +7,19 @@
 #include <vector>
 #include <memory>
 #include "ViewFile.h"
+#include "ArrowHandle.h"
 
 class View : public Renderable
 {
 public:
     View(SDL_Renderer* renderer, SDL_Window* window);
     void handleEvent(const SDL_Event& event);
+    void processDynamicContent();
     void checkWhatNeedsToBeRedrawn();
 
 private:
     static constexpr int panSensitivity = 10;
+    static constexpr int arrowHandleWidth = 20;
 
     SDL_Window* window;
     SDL_Renderer* renderer;
@@ -55,6 +58,12 @@ private:
     bool _hoveringSystemIsOn = true;
     std::shared_ptr<Node> _nodeThatIsBeingHovered;
 
+    // System: Arrow Handle
+    void arrowHandleSystemOn(bool isIt);
+    bool _arrowHandleSystemIsOn = true;
+    std::shared_ptr<Node> _nodeThatHasArrowHandle;
+    std::shared_ptr<ArrowHandle> _arrowHandle;
+
     // Waiting
     void switchToStateWaiting();
 
@@ -67,6 +76,12 @@ private:
     void switchToStateInteracting(std::shared_ptr<Node> nodeThatWasClickedOn);
     std::shared_ptr<Node> _nodeThatIsBeingInteractedWith;
 
+    // New Arrow
+    void switchToStateNewArrow(std::shared_ptr<Node> sourceNode);
+    std::shared_ptr<Node> _nodeThatIsTheSourceOfArrow;
+    std::shared_ptr<Arrow> _arrowThatIsBeingCreated;
+    std::shared_ptr<Node> _nodeThatArrowMightConnectTo;
+
     /*
     Node* _nodeThatWasMostRecentlySelected;
 
@@ -76,10 +91,6 @@ private:
     void switchToStateSelecting();
 
 
-    //Arrow* _arrowThatIsBeingCreated TODO
-    Node* _nodeThatArrowMightConnectTo;
-    void switchToStateNewArrow();
-
     //Arrow* _arrowThatIsBeingDragged: Arrow = null; TODO
     float _tValueOfArrowBeingDragged;
     void switchToStateDraggingArrow();
@@ -87,11 +98,7 @@ private:
     //Arrow* _arrowThatIsBeingInteractedWith TODO
     void switchToStateInteractingWithArrow();
 
-
-    bool _arrowHandleSystemIsOn;
-    Node* _nodeThatHasArrowHandle;
-    void turnOnArrowHandleSystem();
-    void turnOffArrowHandleSystem();*/
+    */
     
 
 
@@ -101,4 +108,5 @@ private:
     void clearSelection();
     void addNodeToSelection(std::shared_ptr<Node> node);
     void deleteSelectedNodes();
+    void deleteArrow(std::shared_ptr<Arrow> arrow);
 };

@@ -50,6 +50,9 @@ int main(int argc, char** argv) {
             currentView->handleEvent(event);
         }
 
+        // Process dynamic content
+        currentView->processDynamicContent();
+
         // Let View do first pass to see what needs to be drawn
         currentView->checkWhatNeedsToBeRedrawn();
 

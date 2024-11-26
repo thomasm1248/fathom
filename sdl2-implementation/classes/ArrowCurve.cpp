@@ -33,8 +33,25 @@ void ArrowCurve::setTarget(SDL_FPoint target) {
     recomputeTextureDimensions();
 }
 
+SDL_FPoint ArrowCurve::getSource() {
+    return curve.source;
+}
+
+SDL_FPoint ArrowCurve::getControl() {
+    return curve.control;
+}
+
+SDL_FPoint ArrowCurve::getTarget() {
+    return curve.target;
+}
+
 void ArrowCurve::setTargetBody(std::shared_ptr<Renderable> targetBody) {
     this->targetBody = targetBody;
+    redrawRequested = true;
+}
+
+void ArrowCurve::removeTargetBody() {
+    targetBody = nullptr;
     redrawRequested = true;
 }
 
