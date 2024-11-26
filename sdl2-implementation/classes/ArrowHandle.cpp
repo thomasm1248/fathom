@@ -54,6 +54,8 @@ void ArrowHandle::_render(SDL_Renderer* renderer) {
     SDL_Rect rect = getRect();
     rect.x = 0;
     rect.y = 0;
-    SDL_SetRenderDrawColor(renderer, 14, 150, 158, 255);
+    SDL_SetRenderDrawColor(renderer, 25, 96, 158, 255);
     SDL_RenderFillRect(renderer, &rect);
+    SDL_SetRenderDrawColor(renderer, 14, 150, 158, 255);
+    SDL_RenderDrawRect(renderer, &rect);
 }
