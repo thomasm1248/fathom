@@ -606,12 +606,16 @@ void View::deleteSelectedNodes() {
     for(size_t i = 0; i < nodes.size(); i++) {
         for(size_t j = 0; j < selectedNodes.size(); j++) {
             if(selectedNodes[j] == nodes[i]) {
+                // Delete the arrows connected to the node
                 auto arrowsConnectedToNode = nodes[i]->getAllArrows();
                 for(size_t k = 0; k < arrowsConnectedToNode.size(); k++) {
                     std::shared_ptr arrow{arrowsConnectedToNode[k].lock()};
                     deleteArrow(arrow);
                 }
-                // TODO NOW remove arrow handle from node
+                // If this node has the arrow handle, remove it
+                if(_arrowHandleSystemIsOn && _nodeThatHasArrowHandle == nodes[i])
+                    _arrowHandle->reset();
+                // Delete the node
                 nodes.erase(nodes.begin() + i--);
                 break;
             }
