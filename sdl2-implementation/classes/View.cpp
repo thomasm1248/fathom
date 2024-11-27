@@ -30,7 +30,8 @@ void View::processDynamicContent() {
 }
 
 void View::checkWhatNeedsToBeRedrawn() {
-    overlapRects.clear();
+    // Check if any overlap rects have been created since the last time we checked
+    if(overlapRects.size() > 0) redrawRequested = true;
     // Check if the arrow handle has an overlap rect
     SDL_Rect rect;
     if(_arrowHandle->getOverlapRect(rect)) {
@@ -336,6 +337,8 @@ void View::_render(SDL_Renderer* renderer) {
             // Redraw node
             drawChild(*nodes[i]);
         }
+        // Reset overlap rects
+        overlapRects.clear();
         return;
     }
 
@@ -394,6 +397,8 @@ void View::_render(SDL_Renderer* renderer) {
             }
         }
     }
+    // Reset overlap rects
+    overlapRects.clear();
 }
 
 void View::hoveringSystemOn(bool isIt) {
@@ -615,6 +620,8 @@ void View::deleteSelectedNodes() {
                 // If this node has the arrow handle, remove it
                 if(_arrowHandleSystemIsOn && _nodeThatHasArrowHandle == nodes[i])
                     _arrowHandle->reset();
+                // Add the node's rect to the redraw list
+                overlapRects.push_back(nodes[i]->getRect());
                 // Delete the node
                 nodes.erase(nodes.begin() + i--);
                 break;
@@ -622,16 +629,15 @@ void View::deleteSelectedNodes() {
         }
     }
     selectedNodes.clear();
-    redrawRequested = true;
-    fullRedrawNeeded = true;
 }
 
 void View::deleteArrow(std::shared_ptr<Arrow> arrow) {
     for(size_t i = 0; i < arrows.size(); i++) {
         if(arrows[i] == arrow) {
+            // Add arrow's rect to overlap list
+            overlapRects.push_back(arrows[i]->arrowCurve->getRect());
+            // Delete the arrow
             arrows.erase(arrows.begin() + i);
-            redrawRequested = true;
-            fullRedrawNeeded = true;
             return;
         }
     }
