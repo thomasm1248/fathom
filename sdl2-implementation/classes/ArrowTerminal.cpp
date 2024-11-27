@@ -32,6 +32,13 @@ void ArrowTerminal::removeArrow(std::weak_ptr<Arrow> arrow) {
     }
 }
 
+std::vector<std::weak_ptr<Arrow>> ArrowTerminal::getAllArrows() {
+    std::vector<std::weak_ptr<Arrow>> fullList;
+    fullList.insert(fullList.end(), outgoingArrows.begin(), outgoingArrows.end());
+    fullList.insert(fullList.end(), incomingArrows.begin(), incomingArrows.end());
+    return fullList;
+}
+
 void ArrowTerminal::translateArrows() {
     for(size_t i = 0; i < outgoingArrows.size(); i++) {
         if(outgoingArrows[i].expired())

@@ -14,6 +14,7 @@ public:
     void addOutgoingArrow(std::weak_ptr<Arrow> arrow);
     void addIncomingArrow(std::weak_ptr<Arrow> arrow);
     void removeArrow(std::weak_ptr<Arrow> arrow);
+    std::vector<std::weak_ptr<Arrow>> getAllArrows();
 
 protected:
     void translateArrows();
