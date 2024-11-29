@@ -1,22 +1,21 @@
 #include "View.h"
 #include "TextNode.h"
 #include <iostream>
-#include "ViewFileJSON.h"
 #include <cmath>
 #include "Util.h"
 
-View::View(SDL_Renderer* renderer, SDL_Window* window)
+View::View(SDL_Renderer* renderer, SDL_Window* window, std::shared_ptr<ViewFile> viewFile)
     : Renderable(renderer)
     , window(window)
     , renderer(renderer)
-    , viewFile(new ViewFileJSON("test.fathom", renderer))
+    , viewFile(viewFile)
 {
     if(viewFile->read(nodes, arrows)) {
         SDL_Log("Read file successfully");
     }
     else {
         SDL_Log("Failed to read file");
-        viewFile = nullptr;
+        viewFile.reset();
     }
     // Initialize arrow handle system
     _arrowHandle = std::shared_ptr<ArrowHandle>(new ArrowHandle(renderer));

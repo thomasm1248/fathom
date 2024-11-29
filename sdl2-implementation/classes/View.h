@@ -12,7 +12,7 @@
 class View : public Renderable
 {
 public:
-    View(SDL_Renderer* renderer, SDL_Window* window);
+    View(SDL_Renderer* renderer, SDL_Window* window, std::shared_ptr<ViewFile> viewFile);
     void handleEvent(const SDL_Event& event);
     void processDynamicContent();
     void checkWhatNeedsToBeRedrawn();
