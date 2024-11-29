@@ -339,7 +339,6 @@ void TextBox::doBackspaceAction() {
 }
 
 void TextBox::reWrapFrom(int lineIndexToStartFrom) {
-    // TODO NOW remove this function
     // Note: it is assumed that the starting line is wrapped
     // Note: this function will break if more than one line of text is condensed
     // Do nothing if we're already on the last line
@@ -467,17 +466,24 @@ std::string TextBox::removeParagraph(int indexOfFirstLine) {
 
 std::vector<std::shared_ptr<TextLine>> TextBox::createParagraphLines(std::string text, SDL_Point location) {
     std::vector<std::shared_ptr<TextLine>> linesOfNewParagraph;
+    // Create first line
+    auto firstLine = std::make_shared<TextLine>(renderer, font, location);
+    text = firstLine->insertText(text, 0, width - margin*2);
+    if(text.size() > 0)
+        firstLine->wrapped = true;
+    linesOfNewParagraph.push_back(firstLine);
+    // Create more lines if necessary
     while(text.size() > 0) {
+        // Calculate position of next line
+        location.y += fontSize + lineSpacing;
         // Create new line, and give it as much of the extra text as it will take
         auto newLine = std::make_shared<TextLine>(renderer, font, location);
-        text = newLine->insertText(text, 0, width - margin*2);
+        text = newLine->insertText(text, newLine->numCharacters(), width - margin*2);
         // If there's still same text remaining, mark this line as wrapped
         if(text.size() > 0)
             newLine->wrapped = true;
         // Add new line to the list
         linesOfNewParagraph.push_back(newLine);
-        // Calculate position of next line
-        location.y += fontSize + lineSpacing;
     }
     return linesOfNewParagraph;
 }
