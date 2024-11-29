@@ -33,11 +33,36 @@ void Arrow::updateEndFromMousePosition(SDL_Point mousePosition) {
         SDL_Log("Error: Arrow::updateEndFromMousePosition() called during the wrong state");
         return;
     }
+    // Update our record of the mouse position TODO we probably don't actually need to record this information
     _mousePosition = mousePosition;
+    // Record the current target point for later
+    SDL_FPoint oldTarget = arrowCurve->getTarget();
+    // Move the target point to the mouse position
     SDL_FPoint newTarget;
     newTarget.x = _mousePosition.x;
     newTarget.y = _mousePosition.y;
     arrowCurve->setTarget(newTarget);
+    // Calculate additional force to apply to the control point
+    float amountTargetWasPulledAwayFromControl = 
+        Util::dot(
+            Util::normalize(
+                Util::subtract(oldTarget, arrowCurve->getControl())
+            ),
+            Util::subtract(newTarget, oldTarget)
+        );
+    _controlVelocity =
+        Util::add(
+            _controlVelocity,
+            Util::scale(
+                Util::normalize(
+                    Util::subtract(
+                        arrowCurve->getControl(),
+                        arrowCurve->getSource()
+                    )
+                ),
+                amountTargetWasPulledAwayFromControl * 0.03
+            )
+        );
 }
 
 void Arrow::attachToNode(std::shared_ptr<ArrowTerminal> targetNode) {
