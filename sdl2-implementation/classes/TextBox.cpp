@@ -136,52 +136,28 @@ void TextBox::insertTextAtCursor(std::string text) {
     int firstLineOfParagraph = _lineIndexOfCursor;
     while(firstLineOfParagraph > 0 && lineTextures[firstLineOfParagraph-1]->wrapped)
         firstLineOfParagraph--;
-    // Get all the text from the paragraph
-    std::stringstream ss;
-    int currentLine = firstLineOfParagraph;
-    while(true) {
-        ss << lineTextures[currentLine]->getText();
-        if(!lineTextures[currentLine++]->wrapped)
-            break;
-    }
-    int lineAfterParagraph = currentLine;
+    // Get all the text from the paragraph and insert the new text into it
     _lineIndexOfCursor = firstLineOfParagraph;
     _characterIndexOfCursor = 0;
     int indexAtBeginningOfParagraph = cursorAsIndex();
     int indexOfCursorWithinParagraph = cursorIndex - indexAtBeginningOfParagraph;
-    cursorIndex += text.size(); // Move cursor to end of inserted text
-    text = ss.str().insert(indexOfCursorWithinParagraph, text);
-    // Delete the paragraph's original lines
-    lineTextures.erase(lineTextures.begin() + firstLineOfParagraph, lineTextures.begin() + lineAfterParagraph);
-    int indexToInsertParagraphAt = firstLineOfParagraph;
+    cursorIndex += text.size(); // Move cursor so it's after the inserted text
+    text = removeParagraph(firstLineOfParagraph).insert(indexOfCursorWithinParagraph, text);
     // Create new lines for the paragraph
-    SDL_Point newLineLocation;
-    newLineLocation.x = margin;
-    newLineLocation.y = margin + indexToInsertParagraphAt * (lineSpacing + fontSize);
-    std::vector<std::shared_ptr<TextLine>> linesOfNewParagraph;
-    while(text.size() > 0) {
-        // Create new line, and give it as much of the extra text as it will take
-        auto newLine = std::make_shared<TextLine>(renderer, font, newLineLocation);
-        text = newLine->insertText(text, 0, width - margin*2);
-        // If there's still same text remaining, mark this line as wrapped
-        if(text.size() > 0)
-            newLine->wrapped = true;
-        // If there's still same text remaining, mark this line as wrapped
-        if(text.size() > 0)
-            newLine->wrapped = true;
-        // Add new line to the list
-        linesOfNewParagraph.push_back(newLine);
-        // Calculate position of next line
-        newLineLocation.y += fontSize + lineSpacing;
-    }
-    lineAfterParagraph = firstLineOfParagraph + linesOfNewParagraph.size();
-    lineTextures.insert(lineTextures.begin() + indexToInsertParagraphAt, linesOfNewParagraph.begin(), linesOfNewParagraph.end());
-    // Adjust the location of the lines following the paragraph
+    SDL_Point newParagraphLocation;
+    newParagraphLocation.x = margin;
+    newParagraphLocation.y = margin + firstLineOfParagraph * (lineSpacing + fontSize);
+    auto lines = createParagraphLines(text, newParagraphLocation);
+    lineTextures.insert(lineTextures.begin() + firstLineOfParagraph, lines.begin(), lines.end());
+    // Update positions of following lines
+    SDL_Point updatedLocation = newParagraphLocation;
+    updatedLocation.y += lines.size() * (lineSpacing + fontSize);
+    int lineAfterParagraph = firstLineOfParagraph + lines.size();
     for(size_t i = lineAfterParagraph; i < lineTextures.size(); i++) {
         // Move line
-        lineTextures[i]->moveLine(newLineLocation);
+        lineTextures[i]->moveLine(updatedLocation);
         // Calculate position of next line
-        newLineLocation.y += fontSize + lineSpacing;
+        updatedLocation.y += fontSize + lineSpacing;
     }
     // Put the cursor back
     placeCursorAtIndex(cursorIndex);
@@ -193,59 +169,44 @@ void TextBox::insertTextAtCursor(std::string text) {
 }
 
 void TextBox::insertNewlineAtCursor() {
-    // Split current line at cursor
-    bool lineWasWrapped = lineTextures[_lineIndexOfCursor]->wrapped;
-    std::string newLineText = lineTextures[_lineIndexOfCursor]->insertNewline(_characterIndexOfCursor);
-    // Update the cursor position
-    _lineIndexOfCursor++;
-    _characterIndexOfCursor = 0;
-    // Handle following lines
-    if(lineWasWrapped) {
-        // If the cursor was on the last line, move extra text to a new line
-        if(_lineIndexOfCursor == lineTextures.size()) {
-            // Calculate position for new line
-            SDL_Point lineLocation;
-            lineLocation.x = margin;
-            lineLocation.y = margin + _lineIndexOfCursor * (fontSize+lineSpacing);
-            // Create a new line for the extra text
-            auto newLine = std::make_shared<TextLine>(renderer, font, lineLocation);
-            lineTextures.push_back(newLine);
-            // Insert the text into the new line
-            insertTextAtCursor(newLineText);
-            _characterIndexOfCursor = 0;
-            // Resize texture to accommodate extra line
-            resizeTexture(width, margin*2 + fontSize + (lineTextures.size()-1)*(fontSize+lineSpacing));
-        }
-        // Otherwise, insert extra text into the next line, and reset the cursor
-        // to the beginning
-        else {
-            insertTextAtCursor(newLineText);
-            _characterIndexOfCursor = 0;
-        }
+    /* Splits the current paragraph in two, inserting a newline
+       in-between them.
+    */
+    int currentLine = _lineIndexOfCursor;
+    // Calculate the cursor index
+    int cursorIndex = cursorAsIndex() + 1;
+    // Split current line
+    std::stringstream ss;
+    bool currentLineIsWrapped = lineTextures[currentLine]->wrapped;
+    ss << lineTextures[currentLine]->insertNewline(_characterIndexOfCursor);
+    lineTextures[currentLine]->wrapped = false;
+    // Collect the text from the rest of the paragraph
+    int firstLineOfParagraph = currentLine + 1;
+    if(currentLineIsWrapped) {
+        ss << removeParagraph(firstLineOfParagraph);
     }
-    else {
-        // Calculate position for new line
-        SDL_Point lineLocation;
-        lineLocation.x = margin;
-        lineLocation.y = margin + _lineIndexOfCursor * (fontSize+lineSpacing);
-        // Create a new line for the extra text
-        auto newLine = std::make_shared<TextLine>(renderer, font, lineLocation);
-        lineTextures.insert(lineTextures.begin() + _lineIndexOfCursor, newLine);
-        // Insert the text into the new line
-        insertTextAtCursor(newLineText);
-        _characterIndexOfCursor = 0;
-        // Push the following lines down
-        for(int i = _lineIndexOfCursor + 1; i < lineTextures.size(); i++) {
-            // Calculate new position of line
-            lineLocation.y += fontSize + lineSpacing;
-            // Move line
-            lineTextures[i]->moveLine(lineLocation);
-        }
-        // Resize texture to accommodate extra line
-        resizeTexture(width, margin*2 + fontSize + (lineTextures.size()-1)*(fontSize+lineSpacing));
+    // Create lines for the new paragraph
+    SDL_Point newParagraphLocation;
+    newParagraphLocation.x = margin;
+    newParagraphLocation.y = margin + firstLineOfParagraph * (lineSpacing + fontSize);
+    auto lines = createParagraphLines(ss.str(), newParagraphLocation);
+    lineTextures.insert(lineTextures.begin() + firstLineOfParagraph, lines.begin(), lines.end());
+    // Update positions of following lines
+    SDL_Point updatedLocation = newParagraphLocation;
+    updatedLocation.y += lines.size() * (lineSpacing + fontSize);
+    int lineAfterParagraph = firstLineOfParagraph + lines.size();
+    for(size_t i = lineAfterParagraph; i < lineTextures.size(); i++) {
+        // Move line
+        lineTextures[i]->moveLine(updatedLocation);
+        // Calculate position of next line
+        updatedLocation.y += fontSize + lineSpacing;
     }
-    // Make sure the textbox is re-rendered
+    // Place cursor at new cursor index
+    placeCursorAtIndex(cursorIndex);
+    // Redraw and resize
     redrawRequested = true;
+    int height = margin * 2 + (lineTextures.size()-1) * (fontSize+lineSpacing) + fontSize;
+    resizeTexture(width, height);
 }
 
 void TextBox::handleKeypress(const SDL_Keysym &keysym) {
@@ -378,6 +339,7 @@ void TextBox::doBackspaceAction() {
 }
 
 void TextBox::reWrapFrom(int lineIndexToStartFrom) {
+    // TODO NOW remove this function
     // Note: it is assumed that the starting line is wrapped
     // Note: this function will break if more than one line of text is condensed
     // Do nothing if we're already on the last line
@@ -479,6 +441,45 @@ void TextBox::placeCursorAtIndex(const int _index) {
             if(!lineTextures[i]->wrapped) index--;
         }
     }
+}
+
+std::string TextBox::removeParagraph(int indexOfFirstLine) {
+    /* Removes the lineTextures for the paragraph starting at
+       indexOfFirstLine, and returns the text contained in
+       them. As a side-effect, the cursor is placed where the
+       paragraph used to be. Also, the folowing lines are
+       left where they're currently at.
+    */
+    // Get all the text from the paragraph
+    std::stringstream ss;
+    int currentLine = indexOfFirstLine;
+    while(true) {
+        ss << lineTextures[currentLine]->getText();
+        if(!lineTextures[currentLine++]->wrapped)
+            break;
+    }
+    int lineAfterParagraph = currentLine;
+    // Delete the paragraph's original lines
+    lineTextures.erase(lineTextures.begin() + indexOfFirstLine, lineTextures.begin() + lineAfterParagraph);
+    // Return the text
+    return ss.str();
+}
+
+std::vector<std::shared_ptr<TextLine>> TextBox::createParagraphLines(std::string text, SDL_Point location) {
+    std::vector<std::shared_ptr<TextLine>> linesOfNewParagraph;
+    while(text.size() > 0) {
+        // Create new line, and give it as much of the extra text as it will take
+        auto newLine = std::make_shared<TextLine>(renderer, font, location);
+        text = newLine->insertText(text, 0, width - margin*2);
+        // If there's still same text remaining, mark this line as wrapped
+        if(text.size() > 0)
+            newLine->wrapped = true;
+        // Add new line to the list
+        linesOfNewParagraph.push_back(newLine);
+        // Calculate position of next line
+        location.y += fontSize + lineSpacing;
+    }
+    return linesOfNewParagraph;
 }
 
 void TextBox::resetState() {

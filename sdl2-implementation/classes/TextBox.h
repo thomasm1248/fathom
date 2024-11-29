@@ -41,6 +41,8 @@ private:
     void moveCursorTo(int x, int y);
     int cursorAsIndex();
     void placeCursorAtIndex(const int index);
+    std::string removeParagraph(int indexOfFirstLine);
+    std::vector<std::shared_ptr<TextLine>> createParagraphLines(std::string text, SDL_Point location);
 
     
 
