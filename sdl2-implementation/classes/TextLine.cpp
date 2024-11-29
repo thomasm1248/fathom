@@ -1,5 +1,6 @@
 #include "TextLine.h"
 #include <iostream>
+#include <sstream>
 
 TextLine::TextLine(SDL_Renderer* renderer, TTF_Font* font, const SDL_Point& location)
     : font(font)
@@ -43,7 +44,10 @@ int TextLine::xPosAtIndex(int index) {
 }
 
 std::string TextLine::insertText(std::string newText, int index, int maxWidth) {
-    // TODO use string& and return the updated width
+    return insertText(newText, index, maxWidth, nullptr, nullptr);
+}
+
+std::string TextLine::insertText(std::string newText, int index, int maxWidth, int* oVisibleWidth, int* oDesiredWidth) {
     text.insert(index, newText);
     int finalWidth;
     int finalCharacters;
@@ -53,6 +57,7 @@ std::string TextLine::insertText(std::string newText, int index, int maxWidth) {
     }
     // TODO "Texture not created with SDL_TEXTUREACCESS_TARGET" being caught here
     // If we're splitting a word, push the whole word off to the next line
+    bool wordWasTooBig = false; // flag used later to calculate oDesiredWidth
     if( finalCharacters > 0 &&
         finalCharacters < text.size() &&
         text[finalCharacters-1] != ' ' &&
@@ -65,6 +70,7 @@ std::string TextLine::insertText(std::string newText, int index, int maxWidth) {
                 // The entire line consisted of one word
                 // Don't wrap after all
                 finalCharacters = initialIndex;
+                wordWasTooBig = true;
                 break;
             }
         }
@@ -75,6 +81,42 @@ std::string TextLine::insertText(std::string newText, int index, int maxWidth) {
     // Split the string
     std::string leftoverText = text.substr(finalCharacters);
     text = text.substr(0, finalCharacters);
+    // If requested, measure the visible width
+    if(oVisibleWidth != nullptr) {
+        // Find the index that comes after the last visible character
+        int visibleCharacters = finalCharacters;
+        while(visibleCharacters > 0 && text[visibleCharacters-1] == ' ')
+            visibleCharacters--;
+        // Measure the width
+        int visibleWidth;
+        TTF_SizeUTF8(font, text.substr(0, visibleCharacters).c_str(), &visibleWidth, NULL);
+        if(visibleWidth > *oVisibleWidth)
+            *oVisibleWidth = visibleWidth;
+    }
+    // If requested, measure the desired width
+    if(oDesiredWidth != nullptr) {
+        // If the line contained a single word that was too big to
+        // fit on the line, find its length
+        if(wordWasTooBig) {
+            // Get the first part of the word from this line
+            std::stringstream ss;
+            ss << text;
+            // Get the rest of the word from the leftoverText
+            for(size_t i = 0; i < leftoverText.size(); i++)
+                if(leftoverText[i] != ' ')
+                    ss << leftoverText[i];
+            // Measure the word's length
+            int desiredWidth;
+            TTF_SizeUTF8(font, ss.str().c_str(), &desiredWidth, NULL);
+            if(desiredWidth > *oDesiredWidth)
+                *oDesiredWidth = desiredWidth;
+        }
+        // Otherwise, just use the maxWidth
+        else {
+            if(maxWidth > *oDesiredWidth)
+                *oDesiredWidth = maxWidth;
+        }
+    }
     // Make sure we get redrawn
     redrawRequested = true;
     // Return the text that didn't fit on this line

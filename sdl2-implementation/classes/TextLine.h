@@ -15,6 +15,7 @@ public:
     int indexAtXPos(int x);
     int xPosAtIndex(int index);
     std::string insertText(std::string newText, int index, int maxWidth);
+    std::string insertText(std::string newText, int index, int maxWidth, int* oVisibleWidth, int* oDesiredWidth);
     std::string insertNewline(int index);
     void moveLine(SDL_Point newLocation);
     void removeRange(int startIndex, int count);

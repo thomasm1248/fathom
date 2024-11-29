@@ -1,6 +1,7 @@
 #include "TextBox.h"
 #include <iostream>
 #include <sstream>
+#include "Util.h"
 
 TextBox::TextBox(SDL_Renderer* renderer, TTF_Font* font, int width, std::string text)
     : width(width)
@@ -86,6 +87,9 @@ void TextBox::startEditing() {
 }
 
 void TextBox::stopEditing() {
+    // Resize node dynamically
+    smartResize();
+    // Stop displaying cursor
     switchToStateDisplaying();
 }
 
@@ -93,7 +97,7 @@ std::string TextBox::getText() {
     std::stringstream ss;
     for(size_t i = 0; i < lineTextures.size(); i++) {
         ss << lineTextures[i]->getText();
-        if(!lineTextures[i]->wrapped) ss << '\n';
+        if(!lineTextures[i]->wrapped && i < lineTextures.size()-1) ss << '\n';
     }
     return ss.str();
 }
@@ -465,10 +469,14 @@ std::string TextBox::removeParagraph(int indexOfFirstLine) {
 }
 
 std::vector<std::shared_ptr<TextLine>> TextBox::createParagraphLines(std::string text, SDL_Point location) {
+    return createParagraphLines(text, location, nullptr, nullptr);
+}
+
+std::vector<std::shared_ptr<TextLine>> TextBox::createParagraphLines(std::string text, SDL_Point location, int* visibleWidth, int* desiredWidth) {
     std::vector<std::shared_ptr<TextLine>> linesOfNewParagraph;
     // Create first line
     auto firstLine = std::make_shared<TextLine>(renderer, font, location);
-    text = firstLine->insertText(text, 0, width - margin*2);
+    text = firstLine->insertText(text, 0, width - margin*2, visibleWidth, desiredWidth);
     if(text.size() > 0)
         firstLine->wrapped = true;
     linesOfNewParagraph.push_back(firstLine);
@@ -478,14 +486,92 @@ std::vector<std::shared_ptr<TextLine>> TextBox::createParagraphLines(std::string
         location.y += fontSize + lineSpacing;
         // Create new line, and give it as much of the extra text as it will take
         auto newLine = std::make_shared<TextLine>(renderer, font, location);
-        text = newLine->insertText(text, newLine->numCharacters(), width - margin*2);
+        text = newLine->insertText(text, newLine->numCharacters(), width - margin*2, visibleWidth, desiredWidth);
         // If there's still same text remaining, mark this line as wrapped
         if(text.size() > 0)
             newLine->wrapped = true;
         // Add new line to the list
         linesOfNewParagraph.push_back(newLine);
     }
+    // Return lines of paragraph
     return linesOfNewParagraph;
+}
+
+void TextBox::smartResize() {
+    const int maxWidth = 300;
+    // Save cursor position
+    int cursorIndex = cursorAsIndex();
+    // Get all the text
+    auto allText = getText();
+    // Split the text into lines
+    std::vector<std::string> lines;
+    std::string delimiter = "\n";
+    std::string::size_type pos = 0;
+    std::string::size_type prev = 0;
+    while ((pos = allText.find(delimiter, prev)) != std::string::npos)
+    {
+        lines.push_back(allText.substr(prev, pos - prev));
+        prev = pos + delimiter.size();
+    }
+    lines.push_back(allText.substr(prev));
+    // Calculate the desired width
+    Util::replace_all(allText, "\n", "MMMMMM");
+    int length;
+    TTF_SizeUTF8(font, allText.c_str(), &length, NULL);
+    float area = length * fontSize * 3.0f;
+    width = std::sqrt(area);
+    // If the desired width is too large, skip the first pass
+    bool skipFirstPass = width > maxWidth;
+    bool skipSecondPass = false; // change this later
+    // Prepare to record statistics about the lines
+    int desiredWidth = 0;
+    int visibleWidth = 0;
+    // Do first pass to try to fit all the text into the estimated width
+    if(!skipFirstPass) {
+        // Delete existing lines
+        lineTextures.clear();
+        // Convert the lines into wrapped paragraphs
+        SDL_Point newParagraphLocation{margin, margin};
+        for(size_t i = 0; i < lines.size(); i++) {
+            // Create a paragraph for the line
+            auto paragraphLines = createParagraphLines(lines[i], newParagraphLocation, &visibleWidth, &desiredWidth);
+            // Add new line textures to list
+            lineTextures.insert(lineTextures.end(), paragraphLines.begin(), paragraphLines.end());
+            // Update location for next paragraph
+            newParagraphLocation.y += paragraphLines.size() * (lineSpacing + fontSize);
+        }
+        // Check if the text requested more width
+        if(desiredWidth < width - margin*2)
+            skipSecondPass = true;
+        else
+            width = desiredWidth + margin*2 + 1; // +1 just to give it some extra room
+    }
+    // Do second pass to finalize the arrangement of the text (if needed)
+    if(!skipSecondPass) {
+        // Ensure width is within limit
+        if(width > maxWidth)
+            width = maxWidth;
+        // Delete existing lines
+        lineTextures.clear();
+        // Reset visible width metric
+        visibleWidth = 0;
+        // Convert the lines into wrapped paragraphs
+        SDL_Point newParagraphLocation{margin, margin};
+        for(size_t i = 0; i < lines.size(); i++) {
+            // Create a paragraph for the line
+            auto paragraphLines = createParagraphLines(lines[i], newParagraphLocation, &visibleWidth, nullptr);
+            // Add new line textures to list
+            lineTextures.insert(lineTextures.end(), paragraphLines.begin(), paragraphLines.end());
+            // Update location for next paragraph
+            newParagraphLocation.y += paragraphLines.size() * (lineSpacing + fontSize);
+        }
+    }
+    // Finalize width so it matches the longest line
+    width = visibleWidth + margin*2;
+    // Redraw and resize
+    redrawRequested = true;
+    int height = margin * 2 + (lineTextures.size()-1) * (fontSize+lineSpacing) + fontSize;
+    resizeTexture(width, height);
 }
 
 void TextBox::resetState() {

@@ -23,7 +23,7 @@ TextNode::TextNode(SDL_Renderer* renderer, std::string text, SDL_Point _position
     textBox = std::make_shared<TextBox>(renderer, font, 98, text);
     // Initialize texture
     SDL_Rect textBoxRect = textBox->getRect();
-    initializeTexture(100, textBoxRect.h + 2);
+    initializeTexture(textBoxRect.w + 2, textBoxRect.h + 2);
     moveTexture(_position.x, _position.y);
 }
 
@@ -67,6 +67,10 @@ void TextNode::stopInteraction() {
     SDL_Log("Stopped interaction");
     interacting = false;
     textBox->stopEditing();
+    // Resize node to match textBox
+    auto rect = textBox->getRect();
+    createOverlapRect();
+    resizeTexture(rect.w + 2, rect.h + 2);
     redrawRequested = true;
 }
 
