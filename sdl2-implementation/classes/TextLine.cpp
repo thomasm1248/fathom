@@ -43,6 +43,7 @@ int TextLine::xPosAtIndex(int index) {
 }
 
 std::string TextLine::insertText(std::string newText, int index, int maxWidth) {
+    // TODO use string& and return the updated width
     text.insert(index, newText);
     int finalWidth;
     int finalCharacters;
@@ -50,9 +51,33 @@ std::string TextLine::insertText(std::string newText, int index, int maxWidth) {
         SDL_Log("Error: failed to measure text in TextLine::insertText");
         return "";
     }
+    // TODO "Texture not created with SDL_TEXTUREACCESS_TARGET" being caught here
+    // If we're splitting a word, push the whole word off to the next line
+    if( finalCharacters > 0 &&
+        finalCharacters < text.size() &&
+        text[finalCharacters-1] != ' ' &&
+        text[finalCharacters] != ' '
+    ) {
+        int initialIndex = finalCharacters; // take note in case we need to reset it
+        while(text[finalCharacters-1] != ' ') {
+            finalCharacters--;
+            if(finalCharacters == 0) {
+                // The entire line consisted of one word
+                // Don't wrap after all
+                finalCharacters = initialIndex;
+                break;
+            }
+        }
+    }
+    // Take as much space at the end of the line as possible
+    while(text[finalCharacters] == ' ' && finalCharacters < text.size())
+        finalCharacters++;
+    // Split the string
     std::string leftoverText = text.substr(finalCharacters);
     text = text.substr(0, finalCharacters);
+    // Make sure we get redrawn
     redrawRequested = true;
+    // Return the text that didn't fit on this line
     return leftoverText;
 }
 
@@ -106,7 +131,8 @@ void TextLine::_render(SDL_Renderer* renderer) {
     }
     // Generate surface
     SDL_Color textColor{255, 255, 255, 255};
-    auto surface = TTF_RenderUTF8_Blended(font, text.c_str(), textColor);
+    SDL_Color backgroundColor{0,0,0,255};
+    auto surface = TTF_RenderUTF8_Shaded(font, text.c_str(), textColor, backgroundColor);
     if(!surface) {
         SDL_Log("Error: unable to create text surface.");
         return;

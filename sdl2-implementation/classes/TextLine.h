@@ -8,7 +8,7 @@
 class TextLine : public Renderable
 {
 public:
-    bool wrapped = true;
+    bool wrapped = false;
 
     TextLine(SDL_Renderer* renderer, TTF_Font* font, const SDL_Point& location);
     int numCharacters();

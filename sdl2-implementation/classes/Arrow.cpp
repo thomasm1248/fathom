@@ -14,7 +14,6 @@ Arrow::Arrow(SDL_Renderer* renderer, std::shared_ptr<ArrowTerminal> sourceNode, 
     control.x = (start.x + end.x) / 2;
     control.y = (start.y + end.y) / 2;
     arrowCurve = std::shared_ptr<ArrowCurve>(new ArrowCurve(renderer, start, control, end));
-    // TODO owner should add this arrow to the node's list
 }
 
 Arrow::Arrow(SDL_Renderer* renderer, std::shared_ptr<ArrowTerminal> sourceNode, std::shared_ptr<ArrowTerminal> targetNode, std::string label, SDL_FPoint controlPoint)
@@ -27,7 +26,6 @@ Arrow::Arrow(SDL_Renderer* renderer, std::shared_ptr<ArrowTerminal> sourceNode, 
     SDL_FPoint start = sourceNode->getCenter();
     SDL_FPoint end = targetNode->getCenter();;
     arrowCurve = std::shared_ptr<ArrowCurve>(new ArrowCurve(renderer, start, controlPoint, end));
-    // TODO owner should add this arrow to the node's list
 }
 
 void Arrow::updateEndFromMousePosition(SDL_Point mousePosition) {

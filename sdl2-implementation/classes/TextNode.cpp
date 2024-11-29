@@ -11,7 +11,7 @@ TextNode::TextNode(SDL_Renderer* renderer, std::string text, SDL_Point _position
 
     // Initialize font if not done already
     if(!font) {
-        font = TTF_OpenFont("AovelSansRounded-rdDL.ttf", 14);
+        font = TTF_OpenFont("Aovel Sans Rounded.ttf", 14);
         if(!font) {
             SDL_Log("Error: unable to open font.");
             std::cout << TTF_GetError() << '\n';
@@ -36,7 +36,7 @@ TextNode::TextNode(SDL_Renderer* renderer, SDL_Point _position)
 
     // Initialize font if not done already
     if(!font) {
-        font = TTF_OpenFont("AovelSansRounded-rdDL.ttf", 14);
+        font = TTF_OpenFont("Aovel Sans Rounded.ttf", 14);
         if(!font) {
             SDL_Log("Error: unable to open font.");
             std::cout << TTF_GetError() << '\n';

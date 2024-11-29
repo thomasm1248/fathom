@@ -36,6 +36,12 @@ std::vector<std::weak_ptr<Arrow>> ArrowTerminal::getAllArrows() {
     std::vector<std::weak_ptr<Arrow>> fullList;
     fullList.insert(fullList.end(), outgoingArrows.begin(), outgoingArrows.end());
     fullList.insert(fullList.end(), incomingArrows.begin(), incomingArrows.end());
+    // Remove expired arrows
+    for(size_t i = 0; i < fullList.size(); i++) {
+        if(fullList[i].expired()) {
+            fullList.erase(fullList.begin() + i--);
+        }
+    }
     return fullList;
 }
 

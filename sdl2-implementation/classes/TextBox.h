@@ -39,6 +39,8 @@ private:
     void doBackspaceAction();
     void reWrapFrom(int lineIndexToStartFrom);
     void moveCursorTo(int x, int y);
+    int cursorAsIndex();
+    void placeCursorAtIndex(const int index);
 
     
 

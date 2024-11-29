@@ -22,7 +22,6 @@ SDL_Rect Renderable::getRect() {
         return rect;
     }
     // NULL texture: render to screen directly
-    // TODO get actual size of window instead of screen
     SDL_Rect rect;
     rect.x = 0;
     rect.y = 0;
