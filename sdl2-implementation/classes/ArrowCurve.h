@@ -32,9 +32,11 @@ private:
     SDL_Rect overlapRect;
     bool hasOverlapRect;
     static constexpr float margin = 10;
+    static constexpr int targetMargin = 10;
 
     void _render(SDL_Renderer* renderer);
     void recomputeTextureDimensions();
+    float getEndOfCurve();
 
 
 

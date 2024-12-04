@@ -121,6 +121,32 @@ void ArrowCurve::updateTarget(SDL_FPoint newTarget) {
 }
 
 void ArrowCurve::_render(SDL_Renderer* renderer) {
+    SDL_Color color{255, 255, 255, 255};
+    // Find where the curve should stop
+    float endOfCurve = getEndOfCurve();
+    // Compute direction of arrowhead
+    auto locationOfArrowhead = curve.bezier(endOfCurve);
+    auto justBeforeArrowhead = curve.bezier(endOfCurve - 0.01);
+    auto vector = Util::subtract(locationOfArrowhead, justBeforeArrowhead);
+    float direction = std::atan2(vector.y, vector.x);
+    // Draw arrowhead
+    auto textureLocation = getRect();
+    locationOfArrowhead.x -= textureLocation.x;
+    locationOfArrowhead.y -= textureLocation.y;
+    float point = 10;
+    float side = 7;
+    float sideRotation = 2;
+    SDL_Vertex arrowhead[3];
+    arrowhead[0].position.x = locationOfArrowhead.x + std::cos(direction) * point;
+    arrowhead[0].position.y = locationOfArrowhead.y + std::sin(direction) * point;
+    arrowhead[0].color = color;
+    arrowhead[1].position.x = locationOfArrowhead.x + std::cos(direction + sideRotation) * side;
+    arrowhead[1].position.y = locationOfArrowhead.y + std::sin(direction + sideRotation) * side;
+    arrowhead[1].color = color;
+    arrowhead[2].position.x = locationOfArrowhead.x + std::cos(direction - sideRotation) * side;
+    arrowhead[2].position.y = locationOfArrowhead.y + std::sin(direction - sideRotation) * side;
+    arrowhead[2].color = color;
+    SDL_RenderGeometry(renderer, NULL, arrowhead, 3, NULL, 0);
     // Find right and left edges
     Curve right = curve.offset(1.5);
     Curve left = curve.offset(-1.5);
@@ -132,9 +158,8 @@ void ArrowCurve::_render(SDL_Renderer* renderer) {
     right.translate(origin);
     left.translate(origin);
     // Compute list of vertices
-    SDL_Color color{255, 255, 255, 255};
     for(int i = 0; i < ArrowCurve::samples; i++) {
-        float t = i / (float)(ArrowCurve::samples - 1);
+        float t = i / (float)(ArrowCurve::samples - 1) * endOfCurve;
         ArrowCurve::vertices[i].position = left.bezier(t);
         ArrowCurve::vertices[i].color = color;
         ArrowCurve::vertices[i + ArrowCurve::samples].position = right.bezier(t);
@@ -177,6 +202,39 @@ void ArrowCurve::recomputeTextureDimensions() {
     }
     moveTexture(box.x, box.y);
     resizeTexture(box.w, box.h);
+}
+
+float ArrowCurve::getEndOfCurve() {
+    // Draw the full length of the curve if there's no target body
+    if(!targetBody) return 1;
+    // If there is a target body, cut the curve short
+    // Calculate the box that the curve must not enter
+    SDL_Rect targetRect = targetBody->getRect();
+    targetRect.x -= targetMargin;
+    targetRect.y -= targetMargin;
+    targetRect.w += targetMargin*2;
+    targetRect.h += targetMargin*2;
+    // Search for the t value of where the curve enters the box
+    float t = 0.5;
+    float increment = 0.25;
+    for(int i = 0; i < 20; i++) {
+        SDL_FPoint pointOnCurve = curve.bezier(t);
+        if(
+            pointOnCurve.x < targetRect.x ||
+            pointOnCurve.y < targetRect.y ||
+            pointOnCurve.x > targetRect.x + targetRect.w ||
+            pointOnCurve.y > targetRect.y + targetRect.h
+        ) {
+            // The point is outside of the box
+            t += increment;
+        }
+        else {
+            // The point is inside the box
+            t -= increment;
+        }
+        increment *= .5;
+    }
+    return t;
 }
 
 void ArrowCurve::initializeIndices() {
