@@ -88,6 +88,14 @@ void View::handleEvent(const SDL_Event& event) {
             if(event.key.keysym.sym == SDLK_BACKSPACE) {
                 deleteSelectedNodes();
             }
+            else if(event.key.keysym.sym == SDLK_v && event.key.keysym.mod & KMOD_CTRL) {
+                // Create a new node at the mouse
+                auto newNode = std::shared_ptr<Node>(new TextNode(renderer, mousePosition));
+                nodes.push_back(newNode);
+                switchToStateInteracting(newNode);
+                // Let the node handle the clipboard paste event
+                newNode->handleEvent(event);
+            }
             break;
         case State::Interacting:
             // Pass the event on to the node
