@@ -69,7 +69,7 @@ private:
     void switchToStateWaiting();
 
     // Dragging
-    void switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shiftButtonIsPressed);
+    void switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged);
     bool _userMightBeTryingToInteractWithNode;
     std::shared_ptr<Node> _nodeThatIsDirectTargetOfDrag;
 
@@ -110,6 +110,7 @@ private:
     void moveNodeToFront(std::shared_ptr<Node> node);
     void clearSelection();
     void addNodeToSelection(std::shared_ptr<Node> node);
+    void removeNodeFromSelection(std::shared_ptr<Node> node);
     void addNodesToSelection(std::vector<std::shared_ptr<Node>>&& nodesToAdd);
     void deleteSelectedNodes();
     void deleteArrow(std::shared_ptr<Arrow> arrow);

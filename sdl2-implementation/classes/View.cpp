@@ -226,8 +226,20 @@ void View::handleEvent(const SDL_Event& event) {
                     switchToStateSelecting(mousePosition);
                 }
                 else {
-                    SDL_Keymod modState = SDL_GetModState();
-                    switchToStateDragging(nodeThatWasClicked, modState & KMOD_SHIFT);
+                    // Check if Shift is being pressed
+                    if(SDL_GetModState() & KMOD_SHIFT) {
+                        // Toggle whether clicked node is selected
+                        if(nodeThatWasClicked->isSelected()) {
+                            removeNodeFromSelection(nodeThatWasClicked);
+                        }
+                        else {
+                            addNodeToSelection(nodeThatWasClicked);
+                        }
+                    }
+                    else {
+                        // Start dragging node
+                        switchToStateDragging(nodeThatWasClicked);
+                    }
                 }
             }
             break;
@@ -243,9 +255,18 @@ void View::handleEvent(const SDL_Event& event) {
                     _nodeThatIsBeingInteractedWith->handleEvent(event);
                 }
                 else {
-                    // We clicked on another node, start dragging it
-                    SDL_Keymod modState = SDL_GetModState();
-                    switchToStateDragging(nodeThatWasClicked, modState & KMOD_SHIFT);
+                    // We clicked on another node
+                    // Check if the Shift button is pressed
+                    if(SDL_GetModState() & KMOD_SHIFT) {
+                        // Add both nodes to selection
+                        addNodeToSelection(_nodeThatIsBeingInteractedWith);
+                        addNodeToSelection(nodeThatWasClicked);
+                        // Switch to waiting state
+                        switchToStateWaiting();
+                    }
+                    else {
+                        switchToStateDragging(nodeThatWasClicked);
+                    }
                 }
             }
             else if(event.button.button == SDL_BUTTON_RIGHT) {
@@ -488,7 +509,7 @@ void View::switchToStateWaiting() {
     SDL_Log("State: Waiting");
 }
 
-void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shiftButtonIsPressed) {
+void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged) {
     resetState();
     state = State::Dragging;
     SDL_Log("State: Dragging");
@@ -496,7 +517,7 @@ void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged, bool shi
     arrowHandleSystemOn(false);
     // If you try to drag a node that's not selected, other nodes will get deselected
     if(!nodeToBeDragged->isSelected()) {
-        if(!shiftButtonIsPressed) clearSelection();
+        clearSelection();
     }
     // Otherwise, the user might be trying to interact with the node
     else {
@@ -622,6 +643,17 @@ void View::addNodeToSelection(std::shared_ptr<Node> node) {
     if(!node->isSelected()) selectedNodes.push_back(node);
     node->isSelected(true);
     // TODO _nodeThatWasMostRecentlySelected = node;
+}
+
+void View::removeNodeFromSelection(std::shared_ptr<Node> node) {
+    node->isSelected(false);
+    for(size_t i = 0; i < selectedNodes.size(); i++) {
+        if(selectedNodes[i] == node) {
+            selectedNodes.erase(selectedNodes.begin() + i);
+            return;
+        }
+    }
+    SDL_Log("Error: node was removed from selection even though it wasn't in the list of selected nodes.");
 }
 
 void View::addNodesToSelection(std::vector<std::shared_ptr<Node>>&& nodesToAdd) {
