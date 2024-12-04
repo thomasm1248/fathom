@@ -33,6 +33,7 @@ private:
     SDL_Renderer* renderer;
 
     void _render(SDL_Renderer* renderer);
+    void insertMultilineTextAtCursor(std::string text);
     void insertTextAtCursor(std::string text);
     void insertNewlineAtCursor();
     void handleKeypress(const SDL_Keysym &keysym);

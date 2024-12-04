@@ -17,23 +17,9 @@ TextBox::TextBox(SDL_Renderer* renderer, TTF_Font* font, int width, std::string 
     startLocation.x = margin;
     startLocation.y = margin;
     lineTextures.push_back(std::shared_ptr<TextLine>(new TextLine(renderer, font, startLocation)));
-    // Break text into lines
-    std::vector<std::string> strings;
-    std::string delimiter = "\n";
-    std::string::size_type pos = 0;
-    std::string::size_type prev = 0;
-    while ((pos = text.find(delimiter, prev)) != std::string::npos)
-    {
-        strings.push_back(text.substr(prev, pos - prev));
-        prev = pos + delimiter.size();
-    }
-    strings.push_back(text.substr(prev));
-    // Insert each line into the textbox one-by-one
+    // Insert text into line
     startEditing();
-    for(size_t i = 0; i < strings.size(); i++) {
-        if(i != 0) insertNewlineAtCursor();
-        insertTextAtCursor(strings[i]);
-    }
+    insertMultilineTextAtCursor(text);
     stopEditing();
 }
 
@@ -127,6 +113,25 @@ void TextBox::_render(SDL_Renderer* renderer) {
         cursorRect.h = fontSize;
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &cursorRect);
+    }
+}
+
+void TextBox::insertMultilineTextAtCursor(std::string text) {
+    // Break text into lines
+    std::vector<std::string> strings;
+    std::string delimiter = "\n";
+    std::string::size_type pos = 0;
+    std::string::size_type prev = 0;
+    while ((pos = text.find(delimiter, prev)) != std::string::npos)
+    {
+        strings.push_back(text.substr(prev, pos - prev));
+        prev = pos + delimiter.size();
+    }
+    strings.push_back(text.substr(prev));
+    // Insert each line into the textbox one-by-one
+    for(size_t i = 0; i < strings.size(); i++) {
+        if(i != 0) insertNewlineAtCursor();
+        insertTextAtCursor(strings[i]);
     }
 }
 
@@ -300,6 +305,13 @@ void TextBox::handleKeypress(const SDL_Keysym &keysym) {
             }
         }
         redrawRequested = true;
+        break;
+    case SDLK_v:
+        if(keysym.mod & KMOD_CTRL) {
+            // Paste text into textbox
+            std::string clipboardText{SDL_GetClipboardText()};
+            insertMultilineTextAtCursor(clipboardText);
+        }
         break;
     }
 }
