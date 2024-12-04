@@ -8,6 +8,7 @@
 #include <memory>
 #include "ViewFile.h"
 #include "ArrowHandle.h"
+#include "SelectionBox.h"
 
 class View : public Renderable
 {
@@ -82,13 +83,15 @@ private:
     std::shared_ptr<Arrow> _arrowThatIsBeingCreated;
     std::shared_ptr<Node> _nodeThatArrowMightConnectTo;
 
+    // Selecting
+    void switchToStateSelecting(SDL_Point startPoint);
+    std::shared_ptr<SelectionBox> _selectionBox;
+
     /*
     Node* _nodeThatWasMostRecentlySelected;
 
 
 
-    Vector2 _mousePositionAtStartOfSelection;
-    void switchToStateSelecting();
 
 
     //Arrow* _arrowThatIsBeingDragged: Arrow = null; TODO
@@ -107,6 +110,7 @@ private:
     void moveNodeToFront(std::shared_ptr<Node> node);
     void clearSelection();
     void addNodeToSelection(std::shared_ptr<Node> node);
+    void addNodesToSelection(std::vector<std::shared_ptr<Node>>&& nodesToAdd);
     void deleteSelectedNodes();
     void deleteArrow(std::shared_ptr<Arrow> arrow);
 };

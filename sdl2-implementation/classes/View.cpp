@@ -19,6 +19,8 @@ View::View(SDL_Renderer* renderer, SDL_Window* window, std::shared_ptr<ViewFile>
     }
     // Initialize arrow handle system
     _arrowHandle = std::shared_ptr<ArrowHandle>(new ArrowHandle(renderer));
+    // Initialize selection box
+    _selectionBox = std::make_shared<SelectionBox>(renderer);
 }
 
 void View::processDynamicContent() {
@@ -34,6 +36,11 @@ void View::checkWhatNeedsToBeRedrawn() {
     // Check if the arrow handle has an overlap rect
     SDL_Rect rect;
     if(_arrowHandle->getOverlapRect(rect)) {
+        redrawRequested = true;
+        overlapRects.push_back(rect);
+    }
+    // Check if the selection box has an overlap rect
+    if(_selectionBox->getOverlapRect(rect)) {
         redrawRequested = true;
         overlapRects.push_back(rect);
     }
@@ -184,6 +191,9 @@ void View::handleEvent(const SDL_Event& event) {
                 }
             }
             break;
+        case State::Selecting:
+            _selectionBox->continueSelection(mousePosition);
+            break;
         }
         break;
     case SDL_MOUSEBUTTONDOWN:
@@ -204,7 +214,8 @@ void View::handleEvent(const SDL_Event& event) {
             if(event.button.button == SDL_BUTTON_LEFT) {
                 auto nodeThatWasClicked = getNodeAtMouse();
                 if(nodeThatWasClicked == nullptr) {
-                    // TODO start selecting
+                    // Start selecting
+                    switchToStateSelecting(mousePosition);
                 }
                 else {
                     SDL_Keymod modState = SDL_GetModState();
@@ -273,6 +284,13 @@ void View::handleEvent(const SDL_Event& event) {
                 }
             }
             break;
+        case State::Selecting:
+            if(event.button.button == SDL_BUTTON_LEFT) {
+                clearSelection();
+                auto newlySelectedNodes = _selectionBox->finishSelection(nodes);
+                addNodesToSelection(std::move(newlySelectedNodes));
+                switchToStateWaiting();
+            }
         }
         break;
     case SDL_MOUSEWHEEL:
@@ -319,6 +337,7 @@ void View::_render(SDL_Renderer* renderer) {
         // Draw arrow handle
         SDL_Rect none;
         _arrowHandle->getOverlapRect(none); // reset overlap rect
+        // TODO make arrowHandle use "visible" instead of "active" for cleaner code
         if(_arrowHandle->isActive()) {
             drawChild(*_arrowHandle);
         }
@@ -335,6 +354,14 @@ void View::_render(SDL_Renderer* renderer) {
             nodes[i]->getOverlapRect();
             // Redraw node
             drawChild(*nodes[i]);
+        }
+        // Render selection box
+        if(_selectionBox->visible()) {
+            // Reset overlap rect
+            SDL_Rect nothing;
+            _selectionBox->getOverlapRect(nothing);
+            // Draw the selection box
+            drawChild(*_selectionBox);
         }
         // Reset overlap rects
         overlapRects.clear();
@@ -354,7 +381,6 @@ void View::_render(SDL_Renderer* renderer) {
         if(_arrowHandle->requestsToBeRedrawn()) {
             drawChild(*_arrowHandle);
             overlapRects.push_back(_arrowHandle->getRect());
-            SDL_Rect rect = _arrowHandle->getRect();
         }
         else {
             for(size_t j = 0; j < overlapRects.size(); j++) {
@@ -393,6 +419,18 @@ void View::_render(SDL_Renderer* renderer) {
             for(size_t j = 0; j < overlapRects.size(); j++) {
                 // If the node overlapps the rect, draw it again
                 drawChildIntoClipRect(*nodes[i], overlapRects[j]);
+            }
+        }
+    }
+    // Draw selection box
+    if(_selectionBox->visible()) {
+        if(_selectionBox->requestsToBeRedrawn()) {
+            drawChild(*_selectionBox);
+            overlapRects.push_back(_selectionBox->getRect());
+        }
+        else {
+            for(size_t j = 0; j < overlapRects.size(); j++) {
+                drawChildIntoClipRect(*_selectionBox, overlapRects[j]);
             }
         }
     }
@@ -487,6 +525,14 @@ void View::switchToStateNewArrow(std::shared_ptr<Node> sourceNode) {
     _nodeThatIsTheSourceOfArrow->addOutgoingArrow(_arrowThatIsBeingCreated);
 }
 
+void View::switchToStateSelecting(SDL_Point startPoint) {
+    resetState();
+    state = State::Selecting;
+    arrowHandleSystemOn(false);
+    hoveringSystemOn(false);
+    _selectionBox->beginSelection(startPoint);
+}
+
 void View::resetState() {
     switch(state) {
     case State::Waiting:
@@ -509,7 +555,6 @@ void View::resetState() {
         */
         _nodeThatIsBeingInteractedWith->stopInteraction();
         _nodeThatIsBeingInteractedWith = nullptr;
-        // TODO turnOffArrowHandleSystem();
         break;
     case State::NewArrow:
         _nodeThatIsTheSourceOfArrow = nullptr;
@@ -517,11 +562,11 @@ void View::resetState() {
         _nodeThatArrowMightConnectTo = nullptr;
         arrowHandleSystemOn(true);
         break;
-    /*
     case State::Selecting:
-        //selectionBox.style.visibility = "collapse"; TODO
-        _mousePositionAtStartOfSelection = nullptr;
+        arrowHandleSystemOn(true);
+        hoveringSystemOn(true);
         break;
+    /*
     case State::DraggingArrow:
       _arrowThatIsBeingDragged = nullptr;
       _tValueOfArrowBeingDragged = nullptr;
@@ -535,41 +580,6 @@ void View::resetState() {
       */
     }
 }
-
-/*
-
-void View::switchToStateWaiting() {
-}
-
-bool _userMightBeTryingToInteractWithNode;
-Node* _nodeThatIsDirectTargetOfDrag;
-void View::switchToStateDragging(Node* nodeToBeDragged, bool shiftButtonIsPressed) {
-}
-
-Vector2 _mousePositionAtStartOfSelection;
-void View::switchToStateSelecting() {
-}
-
-Node* _nodeThatIsBeingInteractedWith;
-void View::switchToStateInteracting() {
-}
-
-//Arrow* _arrowThatIsBeingDragged: Arrow = null; TODO
-float _tValueOfArrowBeingDragged;
-void View::switchToStateDraggingArrow() {
-}
-
-//Arrow* _arrowThatIsBeingInteractedWith TODO
-void View::switchToStateInteractingWithArrow() {
-}
-
-bool _arrowHandleSystemIsOn;
-Node* _nodeThatHasArrowHandle;
-void View::turnOnArrowHandleSystem() {
-}
-void View::turnOffArrowHandleSystem() {
-}
-*/
 
 std::shared_ptr<Node> View::getNodeAtMouse() {
     for(int i = nodes.size() - 1; i >= 0; i--) {
@@ -604,6 +614,13 @@ void View::addNodeToSelection(std::shared_ptr<Node> node) {
     if(!node->isSelected()) selectedNodes.push_back(node);
     node->isSelected(true);
     // TODO _nodeThatWasMostRecentlySelected = node;
+}
+
+void View::addNodesToSelection(std::vector<std::shared_ptr<Node>>&& nodesToAdd) {
+    for(size_t i = 0; i < nodesToAdd.size(); i++) {
+        nodesToAdd[i]->isSelected(true);
+    }
+    selectedNodes.insert(selectedNodes.end(), nodesToAdd.begin(), nodesToAdd.end());
 }
 
 void View::deleteSelectedNodes() {
