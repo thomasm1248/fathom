@@ -2,6 +2,7 @@
 
 #include <string>
 #include <SDL.h>
+#include <vector>
 
 namespace Util {
 
@@ -10,6 +11,7 @@ void replace_all(
     std::string const& toReplace,
     std::string const& replaceWith
 );
+std::vector<std::string> splitIntoLines(std::string&& text);
 
 inline float lerp(float a, float b, float t);
 inline float dot(const SDL_FPoint& a, const SDL_FPoint& b);

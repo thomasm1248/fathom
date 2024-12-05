@@ -27,6 +27,20 @@ void Util::replace_all(
     s.swap(buf);
 }
 
+std::vector<std::string> Util::splitIntoLines(std::string&& text) {
+    std::vector<std::string> strings;
+    std::string delimiter = "\n";
+    std::string::size_type pos = 0;
+    std::string::size_type prev = 0;
+    while ((pos = text.find(delimiter, prev)) != std::string::npos)
+    {
+        strings.push_back(text.substr(prev, pos - prev));
+        prev = pos + delimiter.size();
+    }
+    strings.push_back(text.substr(prev));
+    return std::move(strings);
+}
+
 void Util::print(SDL_FPoint point) {
     std::cout << "(" << point.x << ", " << point.y << ")\n";
 }
