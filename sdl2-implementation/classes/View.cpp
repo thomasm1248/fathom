@@ -182,7 +182,7 @@ void View::handleEvent(const SDL_Event& event) {
                 if(_nodeThatArrowMightConnectTo != nodeUnderMouse) {
                     // Disconnect arrow from previous node
                     if(_nodeThatArrowMightConnectTo) {
-                        _nodeThatArrowMightConnectTo->removeArrow(_arrowThatIsBeingCreated);
+                        _nodeThatArrowMightConnectTo->removeIncomingArrow(_arrowThatIsBeingCreated);
                         _arrowThatIsBeingCreated->disconnectFromTarget();
                         _nodeThatArrowMightConnectTo = nullptr;
                     }

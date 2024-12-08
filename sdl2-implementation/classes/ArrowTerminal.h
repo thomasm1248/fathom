@@ -13,7 +13,8 @@ public:
     SDL_FPoint getCenter();
     void addOutgoingArrow(std::weak_ptr<Arrow> arrow);
     void addIncomingArrow(std::weak_ptr<Arrow> arrow);
-    void removeArrow(std::weak_ptr<Arrow> arrow);
+    void removeOutgoingArrow(std::weak_ptr<Arrow> arrow);
+    void removeIncomingArrow(std::weak_ptr<Arrow> arrow);
     std::vector<std::weak_ptr<Arrow>> getAllArrows();
 
 protected:

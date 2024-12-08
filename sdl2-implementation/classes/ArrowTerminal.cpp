@@ -14,7 +14,7 @@ void ArrowTerminal::addIncomingArrow(std::weak_ptr<Arrow> arrow) {
     incomingArrows.push_back(arrow);
 }
 
-void ArrowTerminal::removeArrow(std::weak_ptr<Arrow> arrow) {
+void ArrowTerminal::removeOutgoingArrow(std::weak_ptr<Arrow> arrow) {
     std::shared_ptr _arrow{arrow.lock()};
     for(size_t i = 0; i < outgoingArrows.size(); i++) {
         std::shared_ptr outgoingArrow{outgoingArrows[i].lock()};
@@ -23,6 +23,10 @@ void ArrowTerminal::removeArrow(std::weak_ptr<Arrow> arrow) {
             return;
         }
     }
+}
+
+void ArrowTerminal::removeIncomingArrow(std::weak_ptr<Arrow> arrow) {
+    std::shared_ptr _arrow{arrow.lock()};
     for(size_t i = 0; i < incomingArrows.size(); i++) {
         std::shared_ptr incomingArrow{incomingArrows[i].lock()};
         if(incomingArrow == _arrow) {
