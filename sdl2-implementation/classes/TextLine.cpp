@@ -117,8 +117,11 @@ std::string TextLine::insertText(std::string newText, int index, int maxWidth, i
                 *oDesiredWidth = maxWidth;
         }
     }
-    // Make sure we get redrawn
-    redrawRequested = true;
+    // Calculate new dimensions
+    int measuredWidth;
+    TTF_SizeUTF8(font, text.c_str(), &measuredWidth, NULL);
+    auto rect = getRect();
+    resizeTexture(measuredWidth, rect.h); // TODO use height from Font
     // Return the text that didn't fit on this line
     return leftoverText;
 }
@@ -130,8 +133,11 @@ std::string TextLine::insertNewline(int index) {
     text = text.substr(0, index);
     // Since a newline has been inserted, this line ends with a newline
     wrapped = false;
-    // Make sure this line is redrawn
-    redrawRequested = true;
+    // Calculate new dimensions
+    int measuredWidth;
+    TTF_SizeUTF8(font, text.c_str(), &measuredWidth, NULL);
+    auto rect = getRect();
+    resizeTexture(measuredWidth, rect.h); // TODO use height from Font
     // Return the text that will be moved to the next line
     return extraText;
 }
@@ -143,7 +149,11 @@ void TextLine::moveLine(SDL_Point newLocation) {
 void TextLine::removeRange(int startIndex, int count) {
     // Remove range of text from string
     text.erase(startIndex, count);
-    redrawRequested = true;
+    // Calculate new dimensions
+    int measuredWidth;
+    TTF_SizeUTF8(font, text.c_str(), &measuredWidth, NULL);
+    auto rect = getRect();
+    resizeTexture(measuredWidth, rect.h); // TODO use height from Font
 }
 
 int TextLine::pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth) {
@@ -156,7 +166,11 @@ int TextLine::pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth) {
     }
     // Give other the leftover text
     other->text = leftoverText;
-    other->redrawRequested = true;
+    // Calculate new dimensions of other line
+    int measuredWidth;
+    TTF_SizeUTF8(font, other->text.c_str(), &measuredWidth, NULL);
+    auto rect = other->getRect();
+    other->resizeTexture(measuredWidth, rect.h); // TODO use height from Font
     // Calculate number of characters pulled
     return text.size() - initialLength;
 }

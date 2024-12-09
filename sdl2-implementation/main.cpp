@@ -35,9 +35,14 @@ int main(int argc, char** argv) {
     // Initialize TTF
     TTF_Init();
 
+    // Initialize label node font
+    SDL_Color labelFontForeground{255, 255, 255, 255};
+    SDL_Color labelFontBackground{21, 21, 21, 255};
+    std::shared_ptr<Font> labelNodeFont = std::make_shared<Font>("Aovel Sans Rounded.ttf", 40, labelFontForeground, labelFontBackground);
+
     // Create default view
     // TODO check if argv[1] exists, and make two different constructors for View
-    View* currentView = new View(renderer, window, std::make_shared<ViewFileJSON>(std::string(argv[1]), renderer));
+    View* currentView = new View(renderer, window, std::make_shared<ViewFileJSON>(std::string(argv[1]), renderer, labelNodeFont));
 
     // Main loop
     while(true){

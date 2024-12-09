@@ -13,9 +13,6 @@ public:
     LabelNode(SDL_Renderer* renderer, std::shared_ptr<Font> font, SDL_Point location);
     LabelNode(SDL_Renderer* renderer, std::shared_ptr<Font> font, SDL_Point location, std::string text);
     void handleEvent(const SDL_Event& event);
-    void setPosition(SDL_Point newLocation);
-    void reset();
-    bool getOverlapRect(SDL_Rect& rect);
     void startInteraction();
     void stopInteraction();
     std::string toString();
@@ -29,7 +26,6 @@ private:
     static constexpr int margin = 5;
     int lineSpacing;
     int fontSize;
-    SDL_Point location;
     bool interacting = false;
 
     void _render(SDL_Renderer* renderer);
@@ -40,4 +36,5 @@ private:
     void _selectedStatusHasChanged(bool isItSelected);
     void _hoveredStatusHasChanged(bool isItHovered);
     std::string getText();
+    void reset();
 };

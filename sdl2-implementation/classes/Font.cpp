@@ -31,6 +31,10 @@ int Font::getSize() {
     return size;
 }
 
+int Font::getHeight() {
+    return TTF_FontHeight(font);
+}
+
 SDL_Color Font::getForeground() {
     return foreground;
 }

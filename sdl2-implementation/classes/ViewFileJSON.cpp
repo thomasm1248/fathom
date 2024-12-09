@@ -4,6 +4,7 @@
 #include "TextNode.h"
 #include <fstream>
 #include "Util.h"
+#include "LabelNode.h"
 
 using namespace sajson;
 
@@ -15,9 +16,10 @@ inline bool success(const document& doc) {
     return true;
 }
 
-ViewFileJSON::ViewFileJSON(std::string filepath, SDL_Renderer* renderer)
+ViewFileJSON::ViewFileJSON(std::string filepath, SDL_Renderer* renderer, std::shared_ptr<Font> labelNodeFont)
     : filepath(filepath)
     , renderer(renderer)
+    , labelNodeFont(labelNodeFont)
 {
 }
 
@@ -159,6 +161,7 @@ bool ViewFileJSON::readNode(std::vector<std::shared_ptr<Node>>& nodes, const saj
     bool foundY = false;
     int y;
     bool foundText = false;
+    bool foundLabel = false;
     std::string content;
     auto length = node.get_length();
     for(auto i = 0u; i < length; i++) {
@@ -182,17 +185,35 @@ bool ViewFileJSON::readNode(std::vector<std::shared_ptr<Node>>& nodes, const saj
                 foundText = true;
             }
         }
+        else if(key == "label") {
+            if(val.get_type() == TYPE_STRING) {
+                content = val.as_string();
+                foundLabel = true;
+            }
+        }
     }
     // Put together node
-    if(foundX && foundY && foundText) {
-        // Make node
-        SDL_Point location;
-        location.x = x;
-        location.y = y;
-        auto newNode = std::shared_ptr<TextNode>(new TextNode(renderer, content, location));
-        nodes.push_back(newNode);
-        SDL_Log("pushed a node");
-        return true;
+    if(foundX && foundY) {
+        if(foundText) {
+            // Make text node
+            SDL_Point location;
+            location.x = x;
+            location.y = y;
+            auto newNode = std::shared_ptr<TextNode>(new TextNode(renderer, content, location));
+            nodes.push_back(newNode);
+            SDL_Log("pushed a text node");
+            return true;
+        }
+        else if(foundLabel) {
+            // Make label node
+            SDL_Point location;
+            location.x = x;
+            location.y = y;
+            auto newNode = std::shared_ptr<LabelNode>(new LabelNode(renderer, labelNodeFont, location, content));
+            nodes.push_back(newNode);
+            SDL_Log("pushed a label node");
+            return true;
+        }
     }
     return false;
 }

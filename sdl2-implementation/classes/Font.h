@@ -11,6 +11,7 @@ public:
     ~Font();
     TTF_Font* getFont();
     int getSize();
+    int getHeight();
     SDL_Color getForeground();
     SDL_Color getBackground();
 
