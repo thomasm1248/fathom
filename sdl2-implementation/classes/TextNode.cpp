@@ -1,5 +1,7 @@
 #include "TextNode.h"
 #include <iostream>
+#include <sstream>
+#include "Util.h"
 
 TTF_Font* TextNode::font = NULL;
 int TextNode::numberOfTextNodes = 0;
@@ -96,8 +98,21 @@ void TextNode::handleEvent(const SDL_Event& event) {
     }
 }
 
-std::string TextNode::getContent() {
-    return textBox->getText();
+std::string TextNode::toString() {
+    std::stringstream ss;
+    // Get position
+    auto rect = getRect();
+    // Get text
+    auto text = textBox->getText();
+    Util::replace_all(text, "\n", "\\n");
+    Util::replace_all(text, "\"", "\\\"");
+    // Serialize
+    ss << "{";
+    ss << "\"x\": " << rect.x << ", ";
+    ss << "\"y\": " << rect.y << ", ";
+    ss << "\"text\": \"" << text << "\"";
+    ss << "}";
+    return ss.str();
 }
 
 void TextNode::_render(SDL_Renderer* renderer) {

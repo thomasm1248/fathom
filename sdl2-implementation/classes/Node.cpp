@@ -1,5 +1,10 @@
 #include "Node.h"
 
+Node::Node(SDL_Renderer* renderer)
+    : ArrowTerminal(renderer)
+{
+}
+
 void Node::translate(int dx, int dy) {
     createOverlapRect();
     auto rect = getRect();

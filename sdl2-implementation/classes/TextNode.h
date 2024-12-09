@@ -13,7 +13,7 @@ public:
     void startInteraction();
     void stopInteraction();
     void handleEvent(const SDL_Event& event);
-    std::string getContent();
+    std::string toString();
 
 private:
     static TTF_Font* font;

@@ -63,14 +63,7 @@ bool ViewFileJSON::write(std::vector<std::shared_ptr<Node>> &nodes, std::vector<
     file << "{\"version\": 0, \"nodes\": [";
     for(size_t i = 0; i < nodes.size(); i++) {
         if(i != 0) file << ", ";
-        auto rect = nodes[i]->getRect();
-        file << "{\"x\": " << rect.x << ", ";
-        file << "\"y\": " << rect.y << ", ";
-        file << "\"type\": 0, ";
-        auto content = nodes[i]->getContent();
-        Util::replace_all(content, "\n", "\\n");
-        Util::replace_all(content, "\"", "\\\"");
-        file << "\"content\": \"" << content << "\"}";
+        file << nodes[i]->toString();
     }
     file << "], \"arrows\": [";
     for(size_t i = 0; i < arrows.size(); i++) {
@@ -165,7 +158,7 @@ bool ViewFileJSON::readNode(std::vector<std::shared_ptr<Node>>& nodes, const saj
     int x;
     bool foundY = false;
     int y;
-    bool foundContent = false;
+    bool foundText = false;
     std::string content;
     auto length = node.get_length();
     for(auto i = 0u; i < length; i++) {
@@ -183,15 +176,15 @@ bool ViewFileJSON::readNode(std::vector<std::shared_ptr<Node>>& nodes, const saj
                 foundY = true;
             }
         }
-        else if(key == "content") {
+        else if(key == "text") {
             if(val.get_type() == TYPE_STRING) {
                 content = val.as_string();
-                foundContent = true;
+                foundText = true;
             }
         }
     }
     // Put together node
-    if(foundX && foundY && foundContent) {
+    if(foundX && foundY && foundText) {
         // Make node
         SDL_Point location;
         location.x = x;
