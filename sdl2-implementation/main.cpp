@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
     // Create default view
     // TODO check if argv[1] exists, and make two different constructors for View
-    View* currentView = new View(renderer, window, std::make_shared<ViewFileJSON>(std::string(argv[1]), renderer, labelNodeFont));
+    View* currentView = new View(renderer, window, std::make_shared<ViewFileJSON>(std::string(argv[1]), renderer, labelNodeFont), labelNodeFont);
 
     // Main loop
     while(true){

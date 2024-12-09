@@ -1,14 +1,16 @@
 #include "View.h"
 #include "TextNode.h"
+#include "LabelNode.h"
 #include <iostream>
 #include <cmath>
 #include "Util.h"
 
-View::View(SDL_Renderer* renderer, SDL_Window* window, std::shared_ptr<ViewFile> viewFile)
+View::View(SDL_Renderer* renderer, SDL_Window* window, std::shared_ptr<ViewFile> viewFile, std::shared_ptr<Font> labelNodeFont)
     : Renderable(renderer)
     , window(window)
     , renderer(renderer)
     , viewFile(viewFile)
+    , labelNodeFont(labelNodeFont)
 {
     if(viewFile->read(nodes, arrows)) {
         SDL_Log("Read file successfully");
@@ -215,6 +217,13 @@ void View::handleEvent(const SDL_Event& event) {
                 switchToStateNewArrow(_nodeThatHasArrowHandle);
                 break; // No more action needed
             }
+        }
+        // It's always possible to create a label node with a right-click
+        if(event.button.button == SDL_BUTTON_RIGHT) {
+            // Create new label node
+            auto newLabel = std::make_shared<LabelNode>(renderer, labelNodeFont, mousePosition);
+            nodes.push_back(newLabel);
+            switchToStateInteracting(newLabel);
         }
         // Do state-specific things
         switch(state) {

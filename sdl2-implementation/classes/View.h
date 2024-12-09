@@ -9,11 +9,12 @@
 #include "ViewFile.h"
 #include "ArrowHandle.h"
 #include "SelectionBox.h"
+#include "Font.h"
 
 class View : public Renderable
 {
 public:
-    View(SDL_Renderer* renderer, SDL_Window* window, std::shared_ptr<ViewFile> viewFile);
+    View(SDL_Renderer* renderer, SDL_Window* window, std::shared_ptr<ViewFile> viewFile, std::shared_ptr<Font> labelNodeFont);
     void handleEvent(const SDL_Event& event);
     void processDynamicContent();
     void checkWhatNeedsToBeRedrawn();
@@ -44,6 +45,7 @@ private:
     std::vector<SDL_Rect> overlapRects;
     bool fullRedrawNeeded = true;
     SDL_FPoint fractionalPan{0.0,0.0};
+    std::shared_ptr<Font> labelNodeFont;
 
     void _render(SDL_Renderer* renderer);
 
