@@ -132,9 +132,7 @@ void View::handleEvent(const SDL_Event& event) {
             _nodeThatIsBeingInteractedWith->handleEvent(event);
             break;
         case State::Waiting:
-            auto nodePosition = mousePosition;
-            nodePosition.x -= 103; // TODO make a cursor that won't get in the way, then use the mouse position
-            auto newNode = std::shared_ptr<Node>(new TextNode(renderer, nodePosition));
+            auto newNode = std::shared_ptr<Node>(new TextNode(renderer, mousePosition));
             nodes.push_back(newNode);
             switchToStateInteracting(newNode);
             newNode->handleEvent(event);
