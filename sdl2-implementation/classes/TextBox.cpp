@@ -73,9 +73,6 @@ void TextBox::startEditing() {
 }
 
 void TextBox::stopEditing() {
-    // Resize node dynamically
-    smartResize();
-    // Stop displaying cursor
     switchToStateDisplaying();
 }
 
@@ -484,6 +481,7 @@ std::vector<std::shared_ptr<TextLine>> TextBox::createParagraphLines(std::string
         firstLine->wrapped = true;
     linesOfNewParagraph.push_back(firstLine);
     // Create more lines if necessary
+    int count = 0;
     while(text.size() > 0) {
         // Calculate position of next line
         location.y += fontSize + lineSpacing;
@@ -495,6 +493,11 @@ std::vector<std::shared_ptr<TextLine>> TextBox::createParagraphLines(std::string
             newLine->wrapped = true;
         // Add new line to the list
         linesOfNewParagraph.push_back(newLine);
+        // Prevent infinite loops
+        if(++count >= 500) {
+            SDL_Log("Error: creating infinite lines for paragraph");
+            break;
+        }
     }
     // Return lines of paragraph
     return linesOfNewParagraph;
@@ -507,22 +510,15 @@ void TextBox::smartResize() {
     // Get all the text
     auto allText = getText();
     // Split the text into lines
-    std::vector<std::string> lines;
-    std::string delimiter = "\n";
-    std::string::size_type pos = 0;
-    std::string::size_type prev = 0;
-    while ((pos = allText.find(delimiter, prev)) != std::string::npos)
-    {
-        lines.push_back(allText.substr(prev, pos - prev));
-        prev = pos + delimiter.size();
-    }
-    lines.push_back(allText.substr(prev));
+    auto copyOfText = allText;
+    auto lines = Util::splitIntoLines(std::move(copyOfText));
     // Calculate the desired width
     Util::replace_all(allText, "\n", "MMMMMM");
     int length;
     TTF_SizeUTF8(font, allText.c_str(), &length, NULL);
     float area = length * fontSize * 3.0f;
     width = std::sqrt(area);
+    if(width < 20) width = 20;
     // If the desired width is too large, skip the first pass
     bool skipFirstPass = width > maxWidth;
     bool skipSecondPass = false; // change this later
@@ -535,6 +531,7 @@ void TextBox::smartResize() {
         lineTextures.clear();
         // Convert the lines into wrapped paragraphs
         SDL_Point newParagraphLocation{margin, margin};
+        std::cout << "     " << lines.size() << '\n';
         for(size_t i = 0; i < lines.size(); i++) {
             // Create a paragraph for the line
             auto paragraphLines = createParagraphLines(lines[i], newParagraphLocation, &visibleWidth, &desiredWidth);
@@ -593,8 +590,8 @@ void TextBox::switchToStateDisplaying() {
     resetState();
     state = State::Displaying;
     SDL_Log("TextBox State: Displaying");
-    // This will probably change how this TextBox looks
-    redrawRequested = true;
+    // Resize node dynamically
+    smartResize();
 }
 
 void TextBox::switchToStateEditing() {
@@ -605,4 +602,25 @@ void TextBox::switchToStateEditing() {
     _lineIndexOfCursor = lineTextures.size() - 1;
     _characterIndexOfCursor = lineTextures[_lineIndexOfCursor]->numCharacters();
     redrawRequested = true;
+    // Make sure textbox is wider
+    if(getRect().w < minWidth) {
+        // Make the width wider
+        width = minWidth;
+        // Save the cursor position
+        int cursorIndex = cursorAsIndex();
+        // Get the text
+        auto text = getText();
+        // Replace all line textures with a single empty line
+        lineTextures.clear();
+        SDL_Point startLocation;
+        startLocation.x = margin;
+        startLocation.y = margin;
+        lineTextures.push_back(std::make_shared<TextLine>(renderer, font, startLocation));
+        // Insert text back into the text box
+        _lineIndexOfCursor = 0;
+        _characterIndexOfCursor = 0;
+        insertMultilineTextAtCursor(text);
+        // Place cursor back where it was
+        placeCursorAtIndex(cursorIndex);
+    }
 }

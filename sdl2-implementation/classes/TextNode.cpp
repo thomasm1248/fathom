@@ -62,7 +62,10 @@ void TextNode::startInteraction() {
     SDL_Log("Started interaction");
     interacting = true;
     textBox->startEditing();
-    redrawRequested = true;
+    // Resize node to match textBox
+    auto rect = textBox->getRect();
+    createOverlapRect();
+    resizeTexture(rect.w + 2, rect.h + 2);
 }
 
 void TextNode::stopInteraction() {
@@ -73,7 +76,6 @@ void TextNode::stopInteraction() {
     auto rect = textBox->getRect();
     createOverlapRect();
     resizeTexture(rect.w + 2, rect.h + 2);
-    redrawRequested = true;
 }
 
 void TextNode::handleEvent(const SDL_Event& event) {

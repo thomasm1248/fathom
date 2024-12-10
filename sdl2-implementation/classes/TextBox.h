@@ -18,6 +18,7 @@ public:
     std::string getText();
 
 private:
+    int minWidth = 100;
     int fontSize = 14;
     int margin = 5;
     int lineSpacing = 5;
