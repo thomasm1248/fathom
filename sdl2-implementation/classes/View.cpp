@@ -100,7 +100,7 @@ void View::handleEvent(const SDL_Event& event) {
             }
             break;
         case State::Interacting:
-            if(event.key.keysym.sym == SDLK_RETURN && event.key.keysym.mod & (KMOD_CTRL | KMOD_SHIFT)) {
+            if(event.key.keysym.sym == SDLK_RETURN && event.key.keysym.mod & KMOD_CTRL) {
                 // Create a new node underneath the current one
                 _nodeThatIsBeingInteractedWith->stopInteraction();
                 auto rect = _nodeThatIsBeingInteractedWith->getRect();
