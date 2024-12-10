@@ -326,11 +326,13 @@ void View::handleEvent(const SDL_Event& event) {
                     switchToStateWaiting();
                 }
                 else {
-                    // Create a new node, and connect the arrow to it TODO
-                    // TODO the following lines are only a placeholder:
-                    deleteArrow(_arrowThatIsBeingCreated);
-                    // Go to waiting state again
-                    switchToStateWaiting();
+                    // Create a new node, and connect the arrow to it
+                    auto newNode = std::shared_ptr<Node>(new TextNode(renderer, mousePosition));
+                    nodes.push_back(newNode);
+                    newNode->addIncomingArrow(_arrowThatIsBeingCreated);
+                    _arrowThatIsBeingCreated->attachToNode(newNode);
+                    // Start editing node TODO start editing label of arrow? (node might be deleted then
+                    switchToStateInteracting(newNode);
                 }
             }
             break;
