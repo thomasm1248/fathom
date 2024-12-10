@@ -100,8 +100,20 @@ void View::handleEvent(const SDL_Event& event) {
             }
             break;
         case State::Interacting:
-            // Pass the event on to the node
-            _nodeThatIsBeingInteractedWith->handleEvent(event);
+            if(event.key.keysym.sym == SDLK_RETURN && event.key.keysym.mod & (KMOD_CTRL | KMOD_SHIFT)) {
+                // Create a new node underneath the current one
+                _nodeThatIsBeingInteractedWith->stopInteraction();
+                auto rect = _nodeThatIsBeingInteractedWith->getRect();
+                SDL_Point newNodeLocation{rect.x, rect.y + rect.h + 5};
+                auto newNode = std::shared_ptr<Node>(new TextNode(renderer, newNodeLocation));
+                nodes.push_back(newNode);
+                _nodeThatIsBeingInteractedWith = newNode;
+                _nodeThatIsBeingInteractedWith->startInteraction();
+            }
+            else {
+                // Pass the event on to the node
+                _nodeThatIsBeingInteractedWith->handleEvent(event);
+            }
             break;
         }
         break;
@@ -120,7 +132,9 @@ void View::handleEvent(const SDL_Event& event) {
             _nodeThatIsBeingInteractedWith->handleEvent(event);
             break;
         case State::Waiting:
-            auto newNode = std::shared_ptr<Node>(new TextNode(renderer, mousePosition));
+            auto nodePosition = mousePosition;
+            nodePosition.x -= 103; // TODO make a cursor that won't get in the way, then use the mouse position
+            auto newNode = std::shared_ptr<Node>(new TextNode(renderer, nodePosition));
             nodes.push_back(newNode);
             switchToStateInteracting(newNode);
             newNode->handleEvent(event);

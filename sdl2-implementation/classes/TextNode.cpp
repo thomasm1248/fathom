@@ -34,7 +34,7 @@ TextNode::TextNode(SDL_Renderer* renderer, SDL_Point _position)
 {
     numberOfTextNodes++;
     initializeTexture(100, 26);
-    moveTexture(_position.x - 103, _position.y);
+    moveTexture(_position.x, _position.y);
 
     // Initialize font if not done already
     if(!font) {
