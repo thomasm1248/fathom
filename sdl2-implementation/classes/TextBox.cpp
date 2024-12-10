@@ -504,7 +504,7 @@ std::vector<std::shared_ptr<TextLine>> TextBox::createParagraphLines(std::string
 }
 
 void TextBox::smartResize() {
-    const int maxWidth = 300;
+    const int maxWidth = 400;
     // Save cursor position
     int cursorIndex = cursorAsIndex();
     // Get all the text
