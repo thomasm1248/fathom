@@ -115,6 +115,10 @@ std::string TextNode::toString() {
     return ss.str();
 }
 
+bool TextNode::isEmpty() {
+    return textBox->getText().size() == 0;
+}
+
 void TextNode::_render(SDL_Renderer* renderer) {
     SDL_Rect rect = getRect();
     rect.x = 0;

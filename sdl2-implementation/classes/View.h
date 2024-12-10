@@ -115,5 +115,6 @@ private:
     void removeNodeFromSelection(std::shared_ptr<Node> node);
     void addNodesToSelection(std::vector<std::shared_ptr<Node>>&& nodesToAdd);
     void deleteSelectedNodes();
+    void deleteNode(std::shared_ptr<Node> node);
     void deleteArrow(std::shared_ptr<Arrow> arrow);
 };

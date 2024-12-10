@@ -14,6 +14,7 @@ public:
     void stopInteraction();
     void handleEvent(const SDL_Event& event);
     std::string toString();
+    bool isEmpty();
 
 private:
     static TTF_Font* font;

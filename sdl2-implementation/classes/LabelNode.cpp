@@ -85,6 +85,12 @@ std::string LabelNode::toString() {
     return ss.str();
 }
 
+bool LabelNode::isEmpty() {
+    for(size_t i = 0; i < lines.size(); i++)
+        if(lines[i]->numCharacters()) return false;
+    return true;
+}
+
 void LabelNode::_render(SDL_Renderer* renderer) {
     // Draw background
     auto backgroundColor = font->getBackground();

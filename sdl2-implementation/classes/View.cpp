@@ -586,12 +586,13 @@ void View::resetState() {
         arrowHandleSystemOn(true);
         break;
     case State::Interacting:
-        /* TODO delete empty label nodes
-        if(isLabelNode(_nodeThatIsBeingInteractedWith) && _nodeThatIsBeingInteractedWith.isEmpty()) {
+        // Stop interaction with node
+        _nodeThatIsBeingInteractedWith->stopInteraction();
+        // Delete empty node
+        if(_nodeThatIsBeingInteractedWith->isEmpty()) {
             deleteNode(_nodeThatIsBeingInteractedWith);
         }
-        */
-        _nodeThatIsBeingInteractedWith->stopInteraction();
+        // Reset variable
         _nodeThatIsBeingInteractedWith = nullptr;
         break;
     case State::NewArrow:
@@ -685,6 +686,11 @@ void View::deleteSelectedNodes() {
                 // If this node has the arrow handle, remove it
                 if(_arrowHandleSystemIsOn && _nodeThatHasArrowHandle == nodes[i])
                     _arrowHandle->reset();
+                // Add the node's overlap rect if it has one
+                auto overlapRect = nodes[i]->getOverlapRect();
+                if(!SDL_RectEmpty(&overlapRect)) {
+                    overlapRects.push_back(overlapRect);
+                }
                 // Add the node's rect to the redraw list
                 overlapRects.push_back(nodes[i]->getRect());
                 // Delete the node
@@ -694,6 +700,33 @@ void View::deleteSelectedNodes() {
         }
     }
     selectedNodes.clear();
+}
+
+void View::deleteNode(std::shared_ptr<Node> node) {
+    // Delete the arrows connected to the node
+    auto arrowsConnectedToNode = node->getAllArrows();
+    for(size_t k = 0; k < arrowsConnectedToNode.size(); k++) {
+        std::shared_ptr arrow{arrowsConnectedToNode[k].lock()};
+        deleteArrow(arrow);
+    }
+    // If this node has the arrow handle, remove it
+    if(_arrowHandleSystemIsOn && _nodeThatHasArrowHandle == node)
+        _arrowHandle->reset();
+    // Add the node's rect to the redraw list
+    overlapRects.push_back(node->getRect());
+    // Add the node's overlap rect if it has one
+    auto overlapRect = node->getOverlapRect();
+    if(!SDL_RectEmpty(&overlapRect)) {
+        overlapRects.push_back(overlapRect);
+    }
+    // Delete the node
+    for(size_t i = 0; i < nodes.size(); i++) {
+        if(nodes[i] == node) {
+            nodes.erase(nodes.begin() + i);
+            return;
+        }
+    }
+    SDL_Log("Error: View::deleteNode was told to delete a node that wasn't in the list of nodes.");
 }
 
 void View::deleteArrow(std::shared_ptr<Arrow> arrow) {

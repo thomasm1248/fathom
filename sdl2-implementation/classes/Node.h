@@ -19,6 +19,7 @@ public:
     virtual void stopInteraction() {} // override this
     virtual void handleEvent(const SDL_Event& event) {} // override this
     virtual std::string toString() = 0; // override this
+    virtual bool isEmpty() = 0; // override this
     virtual ~Node() = default;
 
 protected:

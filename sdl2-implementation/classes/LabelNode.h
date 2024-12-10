@@ -16,6 +16,7 @@ public:
     void startInteraction();
     void stopInteraction();
     std::string toString();
+    bool isEmpty();
 
 private:
     SDL_Renderer* renderer;
