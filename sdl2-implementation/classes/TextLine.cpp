@@ -118,10 +118,7 @@ std::string TextLine::insertText(std::string newText, int index, int maxWidth, i
         }
     }
     // Calculate new dimensions
-    int measuredWidth;
-    TTF_SizeUTF8(font, text.c_str(), &measuredWidth, NULL);
-    auto rect = getRect();
-    resizeTexture(measuredWidth, rect.h); // TODO use height from Font
+    fitToContent();
     // Return the text that didn't fit on this line
     return leftoverText;
 }
@@ -134,10 +131,7 @@ std::string TextLine::insertNewline(int index) {
     // Since a newline has been inserted, this line ends with a newline
     wrapped = false;
     // Calculate new dimensions
-    int measuredWidth;
-    TTF_SizeUTF8(font, text.c_str(), &measuredWidth, NULL);
-    auto rect = getRect();
-    resizeTexture(measuredWidth, rect.h); // TODO use height from Font
+    fitToContent();
     // Return the text that will be moved to the next line
     return extraText;
 }
@@ -149,11 +143,7 @@ void TextLine::moveLine(SDL_Point newLocation) {
 void TextLine::removeRange(int startIndex, int count) {
     // Remove range of text from string
     text.erase(startIndex, count);
-    // Calculate new dimensions
-    int measuredWidth;
-    TTF_SizeUTF8(font, text.c_str(), &measuredWidth, NULL);
-    auto rect = getRect();
-    resizeTexture(measuredWidth, rect.h); // TODO use height from Font
+    fitToContent();
 }
 
 int TextLine::pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth) {
@@ -167,10 +157,7 @@ int TextLine::pullTextFrom(std::shared_ptr<TextLine> other, int maxWidth) {
     // Give other the leftover text
     other->text = leftoverText;
     // Calculate new dimensions of other line
-    int measuredWidth;
-    TTF_SizeUTF8(font, other->text.c_str(), &measuredWidth, NULL);
-    auto rect = other->getRect();
-    other->resizeTexture(measuredWidth, rect.h); // TODO use height from Font
+    other->fitToContent();
     // Calculate number of characters pulled
     return text.size() - initialLength;
 }
@@ -204,3 +191,14 @@ void TextLine::_render(SDL_Renderer* renderer) {
     // Free resources
     SDL_FreeSurface(surface);
 }
+
+void TextLine::fitToContent() {
+    // Calculate new dimensions
+    int measuredWidth = 1;
+    if(text.size() > 0) {
+        TTF_SizeUTF8(font, text.c_str(), &measuredWidth, NULL);
+    }
+    auto rect = getRect();
+    resizeTexture(measuredWidth, rect.h); // TODO use height from Font
+}
+    

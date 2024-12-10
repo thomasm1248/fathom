@@ -28,4 +28,5 @@ private:
     std::shared_ptr<SDL_Surface> surface;
 
     void _render(SDL_Renderer* renderer);
+    void fitToContent();
 };
