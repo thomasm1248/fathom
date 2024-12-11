@@ -14,6 +14,7 @@ public:
     void beginSelection(SDL_Point start);
     void continueSelection(SDL_Point end);
     std::vector<std::shared_ptr<Node>> finishSelection(std::vector<std::shared_ptr<Node>> nodes);
+    void cancelSelection();
 
 private:
     bool _visible = false;

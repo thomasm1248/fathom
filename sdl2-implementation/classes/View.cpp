@@ -314,14 +314,13 @@ void View::handleEvent(const SDL_Event& event) {
         case State::NewArrow:
             if(event.button.button == SDL_BUTTON_LEFT) {
                 if(_nodeThatArrowMightConnectTo == _nodeThatIsTheSourceOfArrow) {
-                    // Delete the arrow
-                    deleteArrow(_arrowThatIsBeingCreated);
                     // Go to waiting state again
                     switchToStateWaiting();
                 }
                 else if(_nodeThatArrowMightConnectTo) {
                     // Attach the arrow to the node permanently
                     _arrowThatIsBeingCreated->finalizeCreation();
+                    _arrowThatIsBeingCreated = nullptr;
                     // Begin editing the label of the arrow TODO
                     switchToStateWaiting();
                 }
@@ -329,8 +328,10 @@ void View::handleEvent(const SDL_Event& event) {
                     // Create a new node, and connect the arrow to it
                     auto newNode = std::shared_ptr<Node>(new TextNode(renderer, mousePosition));
                     nodes.push_back(newNode);
+                    _arrowThatIsBeingCreated->finalizeCreation();
                     newNode->addIncomingArrow(_arrowThatIsBeingCreated);
                     _arrowThatIsBeingCreated->attachToNode(newNode);
+                    _arrowThatIsBeingCreated = nullptr;
                     // Start editing node TODO start editing label of arrow? (node might be deleted then
                     switchToStateInteracting(newNode);
                 }
@@ -585,10 +586,6 @@ void View::switchToStateSelecting(SDL_Point startPoint) {
 void View::resetState() {
     switch(state) {
     case State::Waiting:
-        /*
-        turnOffArrowHandleSystem();
-        _nodeThatIsBeingInteractedWith = nullptr;
-        */
         break;
     case State::Dragging:
         _nodeThatIsDirectTargetOfDrag = nullptr;
@@ -607,12 +604,15 @@ void View::resetState() {
         _nodeThatIsBeingInteractedWith = nullptr;
         break;
     case State::NewArrow:
+        // Delete the arrow if it hasn't been taken care of yet
+        if(_arrowThatIsBeingCreated) deleteArrow(_arrowThatIsBeingCreated);
         _nodeThatIsTheSourceOfArrow = nullptr;
         _arrowThatIsBeingCreated = nullptr;
         _nodeThatArrowMightConnectTo = nullptr;
         arrowHandleSystemOn(true);
         break;
     case State::Selecting:
+        if(_selectionBox->visible()) _selectionBox->cancelSelection();
         arrowHandleSystemOn(true);
         hoveringSystemOn(true);
         break;

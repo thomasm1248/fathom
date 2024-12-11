@@ -61,6 +61,16 @@ std::vector<std::shared_ptr<Node>> SelectionBox::finishSelection(std::vector<std
     return selectedNodes;
 }
 
+void SelectionBox::cancelSelection() {
+    if(!_visible) return;
+    // Make invisible
+    if(!hasOverlapRect) {
+        overlapRect = getRect();
+        hasOverlapRect = true;
+    }
+    _visible = false;
+}
+
 void SelectionBox::_render(SDL_Renderer* renderer) {
     // Get the dimensions
     auto rect = getRect();
