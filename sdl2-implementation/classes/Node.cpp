@@ -11,7 +11,6 @@ void Node::translate(int dx, int dy) {
     rect.x += dx;
     rect.y += dy;
     moveTexture(rect.x, rect.y);
-    translateArrows();
 }
 
 bool Node::isSelected() {
@@ -36,6 +35,7 @@ void Node::isHovered(bool isIt) {
 SDL_Rect Node::getOverlapRect() {
     if(hasOverlapRect) {
         hasOverlapRect = false;
+        translateArrows();
         return overlapRect;
     }
     return {0,0,0,0};
