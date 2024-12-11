@@ -84,6 +84,20 @@ void View::handleEvent(const SDL_Event& event) {
         if(event.key.keysym.sym == SDLK_s && event.key.keysym.mod & KMOD_CTRL) {
             viewFile->write(nodes, arrows);
         }
+        if(event.key.keysym.sym == SDLK_z && event.key.keysym.mod & KMOD_CTRL) {
+            // Reset state
+            switchToStateWaiting();
+            // Reset everything else
+            nodes.clear();
+            arrows.clear();
+            _arrowHandle->reset();
+            // Ask for a full redraw
+            redrawRequested = true;
+            fullRedrawNeeded = true;
+            // Read data from file
+            viewFile->read(nodes, arrows); // TODO check for errors
+            return;
+        }
         // Do state-specific behaviors
         switch(state) {
         case State::Waiting:
