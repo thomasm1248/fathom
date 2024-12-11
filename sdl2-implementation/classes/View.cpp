@@ -91,6 +91,7 @@ void View::handleEvent(const SDL_Event& event) {
             nodes.clear();
             arrows.clear();
             _arrowHandle->reset();
+            selectedNodes.clear();
             // Ask for a full redraw
             redrawRequested = true;
             fullRedrawNeeded = true;
