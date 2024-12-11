@@ -96,6 +96,7 @@ void View::handleEvent(const SDL_Event& event) {
             fullRedrawNeeded = true;
             // Read data from file
             viewFile->read(nodes, arrows); // TODO check for errors
+            SDL_Log("Loaded from file");
             return;
         }
         // Do state-specific behaviors
