@@ -529,13 +529,11 @@ void View::arrowHandleSystemOn(bool isIt) {
 void View::switchToStateWaiting() {
     resetState();
     state = State::Waiting;
-    SDL_Log("State: Waiting");
 }
 
 void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged) {
     resetState();
     state = State::Dragging;
-    SDL_Log("State: Dragging");
     hoveringSystemOn(false);
     arrowHandleSystemOn(false);
     // If you try to drag a node that's not selected, other nodes will get deselected
@@ -558,7 +556,6 @@ void View::switchToStateDragging(std::shared_ptr<Node> nodeToBeDragged) {
 void View::switchToStateInteracting(std::shared_ptr<Node> nodeThatWasClickedOn) {
     resetState();
     state = State::Interacting;
-    SDL_Log("State: Interacting");
     // TODO turnOnArrowHandleSystem();
     // Start interacting with node
     clearSelection();

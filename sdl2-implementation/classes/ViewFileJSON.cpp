@@ -90,6 +90,7 @@ bool ViewFileJSON::write(std::vector<std::shared_ptr<Node>> &nodes, std::vector<
     }
     file << "]}";
     file.close();
+    SDL_Log("Saved successfully");
     return true;
 }
     
@@ -201,7 +202,6 @@ bool ViewFileJSON::readNode(std::vector<std::shared_ptr<Node>>& nodes, const saj
             location.y = y;
             auto newNode = std::shared_ptr<TextNode>(new TextNode(renderer, content, location));
             nodes.push_back(newNode);
-            SDL_Log("pushed a text node");
             return true;
         }
         else if(foundLabel) {
@@ -211,7 +211,6 @@ bool ViewFileJSON::readNode(std::vector<std::shared_ptr<Node>>& nodes, const saj
             location.y = y;
             auto newNode = std::shared_ptr<LabelNode>(new LabelNode(renderer, labelNodeFont, location, content));
             nodes.push_back(newNode);
-            SDL_Log("pushed a label node");
             return true;
         }
     }
@@ -303,7 +302,6 @@ bool ViewFileJSON::readArrow(std::vector<std::shared_ptr<Arrow>>& arrows, std::v
         targetNode->addIncomingArrow(newArrow);
         // Add to the list
         arrows.push_back(newArrow);
-        SDL_Log("pushed an arrow");
         return true;
     }
     SDL_Log("Error: not all components of arrow found in JSON.");

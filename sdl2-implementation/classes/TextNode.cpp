@@ -15,7 +15,7 @@ TextNode::TextNode(SDL_Renderer* renderer, std::string text, SDL_Point _position
     if(!font) {
         font = TTF_OpenFont("Aovel Sans Rounded.ttf", 14);
         if(!font) {
-            SDL_Log("Error: unable to open font.");
+            SDL_Log("Error: TextNode was unable to open font.");
             std::cout << TTF_GetError() << '\n';
             return;
         }
@@ -40,7 +40,7 @@ TextNode::TextNode(SDL_Renderer* renderer, SDL_Point _position)
     if(!font) {
         font = TTF_OpenFont("Aovel Sans Rounded.ttf", 14);
         if(!font) {
-            SDL_Log("Error: unable to open font.");
+            SDL_Log("Error: TextNode was unable to open font.");
             std::cout << TTF_GetError() << '\n';
             return;
         }
@@ -59,7 +59,6 @@ TextNode::~TextNode() {
 }
 
 void TextNode::startInteraction() {
-    SDL_Log("Started interaction");
     interacting = true;
     textBox->startEditing();
     // Resize node to match textBox
@@ -69,7 +68,6 @@ void TextNode::startInteraction() {
 }
 
 void TextNode::stopInteraction() {
-    SDL_Log("Stopped interaction");
     interacting = false;
     textBox->stopEditing();
     // Resize node to match textBox
@@ -93,7 +91,6 @@ void TextNode::handleEvent(const SDL_Event& event) {
         if(newTextBoxRect.w != oldTextBoxRect.w ||
            newTextBoxRect.h != oldTextBoxRect.h
         ) {
-            SDL_Log("Resize node");
             createOverlapRect();
             resizeTexture(newTextBoxRect.w+2, newTextBoxRect.h+2);
         }

@@ -531,7 +531,6 @@ void TextBox::smartResize() {
         lineTextures.clear();
         // Convert the lines into wrapped paragraphs
         SDL_Point newParagraphLocation{margin, margin};
-        std::cout << "     " << lines.size() << '\n';
         for(size_t i = 0; i < lines.size(); i++) {
             // Create a paragraph for the line
             auto paragraphLines = createParagraphLines(lines[i], newParagraphLocation, &visibleWidth, &desiredWidth);
@@ -589,7 +588,6 @@ void TextBox::resetState() {
 void TextBox::switchToStateDisplaying() {
     resetState();
     state = State::Displaying;
-    SDL_Log("TextBox State: Displaying");
     // Resize node dynamically
     smartResize();
 }
@@ -597,7 +595,6 @@ void TextBox::switchToStateDisplaying() {
 void TextBox::switchToStateEditing() {
     resetState();
     state = State::Editing;
-    SDL_Log("TextBox State: Editing");
     // Place cursor at the end of the text
     _lineIndexOfCursor = lineTextures.size() - 1;
     _characterIndexOfCursor = lineTextures[_lineIndexOfCursor]->numCharacters();
