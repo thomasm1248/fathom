@@ -108,7 +108,10 @@ void View::handleEvent(const SDL_Event& event) {
             }
             else if(event.key.keysym.sym == SDLK_v && event.key.keysym.mod & KMOD_CTRL) {
                 // Create a new node at the mouse
-                auto newNode = std::shared_ptr<Node>(new TextNode(renderer, mousePosition));
+                auto newNodeLocation = mousePosition;
+                newNodeLocation.x++;
+                newNodeLocation.y++;
+                auto newNode = std::shared_ptr<Node>(new TextNode(renderer, newNodeLocation));
                 nodes.push_back(newNode);
                 switchToStateInteracting(newNode);
                 // Let the node handle the clipboard paste event
@@ -148,7 +151,10 @@ void View::handleEvent(const SDL_Event& event) {
             _nodeThatIsBeingInteractedWith->handleEvent(event);
             break;
         case State::Waiting:
-            auto newNode = std::shared_ptr<Node>(new TextNode(renderer, mousePosition));
+            auto newNodeLocation = mousePosition;
+            newNodeLocation.x++;
+            newNodeLocation.y++;
+            auto newNode = std::shared_ptr<Node>(new TextNode(renderer, newNodeLocation));
             nodes.push_back(newNode);
             switchToStateInteracting(newNode);
             newNode->handleEvent(event);
